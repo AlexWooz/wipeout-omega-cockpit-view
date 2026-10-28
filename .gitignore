@@ -1,0 +1,15 @@
+# Never commit game data
+*.psarc
+*.bin
+*.elf
+*.gnf
+*.rcsmodel
+*.vex
+eboot*
+!tools/eboot_tool.py
+CUSA*/
+# Local analysis output
+work/
+__pycache__/
+*.pyc
+tools/runtime/rt/
