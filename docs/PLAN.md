@@ -54,3 +54,39 @@ Check: they move with speed and steering, no crash on load, restart or quit.
   cockpit screens, no sway/tilt, stock HUD in third person checked live. The resolution patches write the HUD
   render target size constants next to the 0x64b5bf/0x64b5d0 sites; the port matches signatures against the
   unpatched eboot, so they do not interfere.
+
+## Next: cockpit view for team ships (planned 2026-10-27, not started)
+
+Goal: an internal camera in the pilot's seat of the regular team ships (no tailor-made cockpit), with the stock HUD
+as in third person; if the models allow it, the inside of the ship and the pilot (arms) in view.
+
+What is known:
+- Team ships (`hdships/<team>`, `_c1`, `_n1`, `ships/<team>2048`) ship `Ship.vex`/`ship.rcsmodel`, `Locators.vex` and a
+  canopy glass texture (`*_Glass_Diffuse.gnf`), but no pilot or cockpit textures: the pilot is probably not modelled,
+  or only painted on the canopy.
+- VR ships have `PilotShape` (shown) and `Pilot_HelmetShape` (hidden in the cockpit view); `VR_Cam` sits at the eye.
+- The internal camera (`0x322fd0`) uses `VR_Cam` when the ship has it, else the bumper position; the ship model is
+  hidden in the internal camera unless `VR_Cam` is set (`0x31e07f`, `0x31e463`, `0x301bc7`, now keyed on `VR_Cam`).
+- Team ships already get the stock HUD in every camera (v0.6), so the HUD needs no work.
+
+Steps:
+1. List a team ship's meshes and nodes live (`tools/runtime`, `ship.py` mesh listing; nodes via the model resource
+   `[ship+0x7790]`): look for a pilot, seat, canopy or camera locator. Also read `Locators.vex` node names.
+2. Pick an eye point: a locator if one fits, else a fixed offset from the ship origin per ship class (HD, Fury, 2048),
+   tuned live by writing the camera position (`0x322fd0` output) from `peek.py`.
+3. Camera: give team ships an internal camera at that point. Either a third camera mode, or replace the bumper camera
+   (decide with the user). Options: point `[ship+0x77d0]` at a locator node (the VR path then does the rest; check
+   everything else keyed on `0x77d0` — cockpit sounds, HUD swap, emitters — and keep those off for team ships), or
+   patch the bumper offset in `0x322fd0`.
+4. Model visibility: show the ship model in that camera (the three checks above) and see what the inside looks like:
+   backfaces, near-plane clipping, the canopy glass from inside, engine flare and shield effects drawn around the camera.
+5. Pilot (VR ships first): check whether `PilotShape` has arms that are visible from `VR_Cam`, and whether moving the
+   eye or showing `Pilot_HelmetShape` helps. For team ships only if step 1 finds a pilot mesh.
+6. Checks: all team ships and the 2048 ships, look-back camera, ship destroyed/respawn, 60 and 120+ FPS, weapons
+   effects (shield, absorb, leech beam have `_cockpit` variants only for VR ships).
+
+Decisions (user, 2026-10-27):
+- A new camera mode if possible; if that cannot be done, change the bumper camera instead. For step 3, first find how
+  the camera modes are cycled (triangle; `[ship+0x6986]` 1 external / 2 internal, `0x3129f0`) and whether a mode can be added.
+- Broken or empty insides are handled while testing: per ship, hide the meshes that get in the way (the `[mesh+0x24]`
+  show flag, as `0x3129f0` does for the VR cockpit meshes) rather than falling back to the bumper camera up front.
