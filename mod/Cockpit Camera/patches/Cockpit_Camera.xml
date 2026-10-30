@@ -32,18 +32,20 @@
     <Metadata Title="WipEout Omega Collection" Name="Cockpit Camera - Cockpit sounds" Note="Starts the VR cockpit sounds (engines, servos, consoles, structure) on ships with a cockpit." Author="Alex" PatchVer="0.2" AppVer="01.00" AppElf="eboot.bin" isEnabled="true">
         <PatchList>
             <!-- Cockpit sound emitters (0x32f8f0, after the model is loaded): VR only.
-                 mov al,[VR]; test al,al -> cmp qword [rbx+0x77d0],0 (the je rel32 after it is kept). -->
-            <Line Type="bytes" Address="0x0072f901" Value="4883bbd077000000" Pattern="48 89 fb 85 f6 0f 85 ?? ?? ?? ?? 8a 05 ?? ?? ?? ?? 84 c0 0f 84 ?? ?? ?? ?? 48 8b 3d ?? ?? ?? ?? 48 8d 35 ?? ?? ?? ?? 31 d2 31 c9" At="11"/>
-            <!-- Cockpit sound loops (0x32fc90): VR only. Same change, ship in rdi. -->
-            <Line Type="bytes" Address="0x0072fc99" Value="4883bfd077000000" Pattern="53 85 f6 0f 85 ?? ?? ?? ?? 8a 05 ?? ?? ?? ?? 84 c0 0f 84 ?? ?? ?? ?? 0f b7 87 a0 8b 00 00 48 8d 0d ?? ?? ?? ?? 48 8d 15 ?? ?? ?? ?? 4c 8d 15 ?? ?? ?? ??" At="9"/>
+                 mov al,[VR]; test al,al -> cmp qword [rbx+0x77d8],0 (the VR cockpit node; the je rel32 after it is kept). -->
+            <Line Type="bytes" Address="0x0072f901" Value="4883bbd877000000" Pattern="48 89 fb 85 f6 0f 85 ?? ?? ?? ?? 8a 05 ?? ?? ?? ?? 84 c0 0f 84 ?? ?? ?? ?? 48 8b 3d ?? ?? ?? ?? 48 8d 35 ?? ?? ?? ?? 31 d2 31 c9" At="11"/>
+            <!-- Cockpit sound loops (0x32fc90): VR only. Same change, ship in rdi. (also [ship+0x77d8]) -->
+            <Line Type="bytes" Address="0x0072fc99" Value="4883bfd877000000" Pattern="53 85 f6 0f 85 ?? ?? ?? ?? 8a 05 ?? ?? ?? ?? 84 c0 0f 84 ?? ?? ?? ?? 0f b7 87 a0 8b 00 00 48 8d 0d ?? ?? ?? ?? 48 8d 15 ?? ?? ?? ?? 4c 8d 15 ?? ?? ?? ??" At="9"/>
             <!-- Ship update (0x304dac), player ship: in VR it calls 0x324160, which moves the cockpit parts
                  the emitters above are attached to, and sets the audio listener [0x11aaa78] to ship+0x6200.
                  Without it the emitters never get a position and the loops are silent.
-                 cmp byte [VR],0 -> cmp [r14+0x77d0],rcx (rcx is 0 on both paths here; the je after it is kept). -->
-            <Line Type="bytes" Address="0x00704dac" Value="49398ed0770000" Pattern="88 98 aa 00 00 00 85 c9 74 33 31 c9 be 00 00 00 00 48 85 d2 74 0a 48 0f be 72 5c 48 85 f6 78 0d 48 8b 15 ?? ?? ?? ?? 48 0f a3 f2 73 05 b9 c3 f5 a8 3e 89 88 ac 00 00 00 e9 ?? ?? ?? ?? 80 3d ?? ?? ?? ?? 00 74 11 4c 89 f7 e8 ?? ?? ?? ?? 49 8d 9e 00 62 00 00 eb 6d" At="61"/>
+                 cmp byte [VR],0 -> cmp [r14+0x77d8],rcx (the VR cockpit node) (rcx is 0 on both paths here; the je after it is kept). -->
+            <Line Type="bytes" Address="0x00704dac" Value="49398ed8770000" Pattern="88 98 aa 00 00 00 85 c9 74 33 31 c9 be 00 00 00 00 48 85 d2 74 0a 48 0f be 72 5c 48 85 f6 78 0d 48 8b 15 ?? ?? ?? ?? 48 0f a3 f2 73 05 b9 c3 f5 a8 3e 89 88 ac 00 00 00 e9 ?? ?? ?? ?? 80 3d ?? ?? ?? ?? 00 74 11 4c 89 f7 e8 ?? ?? ?? ?? 49 8d 9e 00 62 00 00 eb 6d" At="61"/>
         </PatchList>
     </Metadata>
-    <Metadata Title="WipEout Omega Collection" Name="Cockpit Camera - HUD on the cockpit screens" Note="The VR HUD on the cockpit screens in the cockpit view of VR ships. The other cameras, and team ships, keep the stock HUD." Author="Alex" PatchVer="0.7" AppVer="01.00" AppElf="eboot.bin" isEnabled="true">
+    <Metadata Title="WipEout Omega Collection" Name="Cockpit Camera - HUD on the cockpit screens" Note="The VR HUD on the cockpit screens in the cockpit view of VR ships. The other cameras, and team ships, keep the stock HUD." Author="Alex" PatchVer="0.9" AppVer="01.00" AppElf="eboot.bin" isEnabled="true">
+        <Target Name="TICK_CAVE" Address="0x00701500" Pattern="8b 05 ?? ?? ?? ?? 45 31 ff 0f b6 c8 c1 e8 08 83 f1 6f 41 33 04 8e 0f b6 c8 c1 e8 08 83 f1 6d 41 33 04 8e 0f b6 c8 c1 e8 08 83 f1 66 41 33 04 8e 0f b6 c8 c1 e8 08 83 f1 6f 41 33 04 8e 0f b6 c8 c1 e8 08 83 f1 72 41 33 04 8e 0f b6 c8 c1 e8 08 83 f1 74 41 33 04 8e 0f b6 c8 c1 e8 08 83 f1 56 41 33 04 8e 0f b6 c8 c1 e8 08 83 f1 52 41 33 04 8e 0f b6 c8 c1 e8 08 83 f1 46 41 33 04 8e 0f b6 c8 c1 e8 08" At="108"/>
+        <Target Name="TICK_RET" Address="0x009cff9b" Pattern="49 8b bd f8 00 03 00 48 85 ff 74 0c 48 8b 07 c5 fa 10 44 24 20 ff 50 18 49 8b bd 08 01 03 00 48 85 ff 74 0c 48 8b 07 c5 fa 10 44 24 20 ff 50 18" At="24"/>
         <PatchList>
             <!-- HUD setup (0x284a40): in VR it loads the *_VR.xml layout, the vr_hud model (0xa735c8) and
                  puts the HUD in the VR slots 0xa73690. Each frame 0x27a130 sets the render-to-texture flag
@@ -85,6 +87,36 @@
                  cmp byte [rsi+0x6985],0; setne dl; mov bl,[rcx+0x158]; add dl,dl; and bl,0xfd; or bl,dl;
                  mov [rcx+0x158],bl; nop -->
             <Line Type="bytes" Address="0x0066e6b5" Value="498b8d48090000418a85880d000031d284c0750a80be85690000000f95c28a995801000000d280e3fd08d388995801000090" Pattern="49 8b b6 c0 78 01 00 48 85 f6 74 08 39 8e d0 87 00 00 74 03 48 89 c6 8a 05 ?? ?? ?? ?? 49 8b 8d 48 09 00 00 84 c0 74 04 31 d2 eb 0a 80 be 85 69 00 00 00 0f 95 c2 8a 99 58 01 00 00 00 d2 80 e3 fd" At="23"/>
+        <!-- 2048 HUD drivers (tools/build_hud2048.py) -->
+            <Line Type="bytes" Address="0x006d79f4" Value="85e40f1f440000" Pattern="c5 fc 11 83 8c 03 00 00 c5 fc 11 83 78 03 00 00 c5 fc 11 83 58 03 00 00 0f 95 c0 80 3d ?? ?? ?? ?? 00 48 8d 04 c1 48 8d 0d ?? ?? ?? ?? 48 0f 45 c8 48 8b 01" At="27"/>
+            <Line Type="bytes" Address="0x006d8f28" Value="85e40f1f440000" Pattern="c5 fc 11 83 8c 03 00 00 c5 fc 11 83 78 03 00 00 c5 fc 11 83 58 03 00 00 0f 95 c0 c5 fc 57 c0 80 3d ?? ?? ?? ?? 00 48 8d 04 c1 48 8d 0d ?? ?? ?? ?? 48 0f 45 c8 48 8b 01" At="31"/>
+            <Line Type="bytes" Address="0x006d01cf" Value="85e40f1f440000" Pattern="c5 fc 11 83 8c 03 00 00 c5 fc 11 83 78 03 00 00 c5 fc 11 83 58 03 00 00 80 3d ?? ?? ?? ?? 00 48 0f 44 c8 48 8b 01 48 8d 0d ?? ?? ?? ?? 48 89 43 10" At="24"/>
+            <Line Type="bytes" Address="0x009e30a6" Value="85e40f1f440000" Pattern="e8 ?? ?? ?? ?? bf 58 09 00 00 e8 ?? ?? ?? ?? 49 89 c4 31 f6 4c 89 e7 e8 ?? ?? ?? ?? 80 3d ?? ?? ?? ?? 00 0f 84 ?? ?? ?? ?? bf 58 09 00 00 e8 ?? ?? ?? ?? 49 89 c7" At="28"/>
+            <Line Type="bytes" Address="0x009e893c" Value="85e40f1f440000" Pattern="e8 ?? ?? ?? ?? bf a8 09 00 00 e8 ?? ?? ?? ?? 49 89 c5 31 f6 4c 89 ef e8 ?? ?? ?? ?? 80 3d ?? ?? ?? ?? 00 74 57 bf a8 09 00 00 e8 ?? ?? ?? ?? 49 89 c7 be 01 00 00 00" At="28"/>
+            <Line Type="bytes" Address="0x009d9a20" Value="85e40f1f440000"/>
+            <Line Type="bytes" Address="0x009e53ed" Value="85e40f1f440000"/>
+            <Line Type="bytes" Address="0x009d7ea8" Value="b2010f1f4000"/>
+            <Line Type="bytes" Address="0x009ddace" Value="b2010f1f4000"/>
+            <Line Type="bytes" Address="0x00701500" Value="498bbdf80003004885ff740c488b07c5fa10442420ff5018498bbd000103004885ff740c488b07c5fa10442420ff5018e9{rel:TICK_RET:0}" Pattern="8b 05 ?? ?? ?? ?? 45 31 ff 0f b6 c8 c1 e8 08 83 f1 6f 41 33 04 8e 0f b6 c8 c1 e8 08 83 f1 6d 41 33 04 8e 0f b6 c8 c1 e8 08 83 f1 66 41 33 04 8e 0f b6 c8 c1 e8 08 83 f1 6f 41 33 04 8e 0f b6 c8 c1 e8 08 83 f1 72 41 33 04 8e 0f b6 c8 c1 e8 08 83 f1 74 41 33 04 8e 0f b6 c8 c1 e8 08 83 f1 56 41 33 04 8e 0f b6 c8 c1 e8 08 83 f1 52 41 33 04 8e 0f b6 c8 c1 e8 08 83 f1 46 41 33 04 8e 0f b6 c8 c1 e8 08" At="108"/>
+            <Line Type="bytes" Address="0x009cff83" Value="e9{rel:TICK_CAVE:0}90909090909090909090909090909090909090" Pattern="c5 f8 2e 25 ?? ?? ?? ?? 0f 83 ?? ?? ?? ?? 48 8d 35 ?? ?? ?? ?? 31 d2 4c 89 f7 e8 ?? ?? ?? ?? 49 8b bd f8 00 03 00 48 85 ff 74 0c 48 8b 07 c5 fa 10 44 24 20 ff 50 18" At="31"/>
+        </PatchList>
+    </Metadata>
+    <Metadata Title="WipEout Omega Collection" Name="Cockpit Camera - Team ships" Note="The internal camera of the regular team ships sits at the pilot's eye (or under the canopy) instead of on the bumper." Author="Alex" PatchVer="0.8" AppVer="01.00" AppElf="eboot.bin" isEnabled="true">
+        <!-- Built by tools/build_cockpit_cam.py, which holds the assembly and the notes. -->
+        <Target Name="CAVE" Address="0x00701018" Pattern="ff 90 e8 00 00 00 41 83 bd 4c 02 00 00 00 0f 85 ?? ?? ?? ?? 8a 05 ?? ?? ?? ?? 84 c0 0f 84 ?? ?? ?? ?? 48 8b 05 ?? ?? ?? ?? 8a 0d ?? ?? ?? ?? 4c 89 3c 24 84 c9 0f 85 ?? ?? ?? ??" At="34"/>
+        <Target Name="SKIP" Address="0x00701014" Pattern="ff 90 e8 00 00 00 41 83 bd 4c 02 00 00 00 0f 85 ?? ?? ?? ?? 8a 05 ?? ?? ?? ?? 84 c0 0f 84 ?? ?? ?? ?? 48 8b 05 ?? ?? ?? ?? 8a 0d ?? ?? ?? ?? 4c 89 3c 24 84 c9 0f 85 ?? ?? ?? ??" At="30" Ref="1"/>
+        <Target Name="LOADER_CODE" Address="0x007010e2" Pattern="ff 90 e8 00 00 00 41 83 bd 4c 02 00 00 00 0f 85 ?? ?? ?? ?? 8a 05 ?? ?? ?? ?? 84 c0 0f 84 ?? ?? ?? ?? 48 8b 05 ?? ?? ?? ?? 8a 0d ?? ?? ?? ?? 4c 89 3c 24 84 c9 0f 85 ?? ?? ?? ??" At="236"/>
+        <Target Name="CAMERA_CODE" Address="0x00701220" Pattern="ff 90 e8 00 00 00 41 83 bd 4c 02 00 00 00 0f 85 ?? ?? ?? ?? 8a 05 ?? ?? ?? ?? 84 c0 0f 84 ?? ?? ?? ?? 48 8b 05 ?? ?? ?? ?? 8a 0d ?? ?? ?? ?? 4c 89 3c 24 84 c9 0f 85 ?? ?? ?? ??" At="554"/>
+        <Target Name="LOADER_RET" Address="0x0071d8e5" Pattern="49 8b 04 dc 4c 89 fe 48 8b 78 18 e8 ?? ?? ?? ?? 85 c0 74 6e 48 ff c3 66 b8 ff ff 4c 39 f3 72 e0 eb 62 c5 f8 57 c0 c4 c1 78 11 87 d0 77 00 00 66 41 c7 87 f8 77 00 00 ff ff 49 c7 87 f0 77 00 00 ff ff ff ff e9 ?? ?? ?? ??" At="69" Ref="1"/>
+        <Target Name="CAMERA_RET" Address="0x00723090" Pattern="49 8b 9f d0 77 00 00 48 85 db 74 76 f6 43 61 10 74 11 48 89 df e8 ?? ?? ?? ?? c4 c1 7a 10 9f 80 75 00 00 48 8b 43 68 49 8d b7 20 76 00 00 c5 f8 10 40 30 c4 e3 79 0c 05 ?? ?? ?? ?? 08 c4 c1 78 11 87 20 76 00 00 49 8b 8f 18 6a 00 00" At="61"/>
+        <PatchList>
+            <!-- Camera setup: the VR options block 0x301018 is never run (jmp past it); it holds the new code. -->
+            <Line Type="bytes" Address="0x0070100a" Pattern="ff 90 e8 00 00 00 41 83 bd 4c 02 00 00 00 0f 85 ?? ?? ?? ?? 8a 05 ?? ?? ?? ?? 84 c0 0f 84 ?? ?? ?? ?? 48 8b 05 ?? ?? ?? ?? 8a 0d ?? ?? ?? ?? 4c 89 3c 24 84 c9 0f 85 ?? ?? ?? ??" At="20" Value="e9{rel:SKIP:0}909090909090909090"/>
+            <Line Type="bytes" Address="0x00701018" Pattern="ff 90 e8 00 00 00 41 83 bd 4c 02 00 00 00 0f 85 ?? ?? ?? ?? 8a 05 ?? ?? ?? ?? 84 c0 0f 84 ?? ?? ?? ?? 48 8b 05 ?? ?? ?? ?? 8a 0d ?? ?? ?? ?? 4c 89 3c 24 84 c9 0f 85 ?? ?? ?? ??" At="34" Value="4885ff0f84c0000000488bb7880000004885f60f849c0000004883c610c5fa109ff0000000c5f82e9fe00000000f86820000004531db8b0684c074414585db75370d202020203d696c6f74750841bb01000000eb233d6d737368750841bb02000000eb143d6c61737374073d7265656e750641bb0300000048ffc6ebb94585db7433817efc68617065752a807efb5375244183fb02740c77144d85c075174989f8eb124d85d2750d4989faeb084d85c975034989f957488b7f20e841ffffff5f488b7f18e937ffffffc3c5f857c0c4c1781187d07700006641c787f8770000ffff49c787f0770000ffffffff505152565741504151415241534883ec38c5f8110c24c5f811542410c5f8115c2420498b87907700004885c00f84a7000000488bb8900000004531c04531c94531d2e8cdfeffff488d15b60000004c89c74885ff75184883c2104c89d74885ff750c4883ea084c89cf4885ff746bc5fa1087dc000000c5fa5887ec000000b80000003fc5f96ed8c5fa59c3c5fa108ff0000000c5f2580ac5fa1097e4000000c5ea585204c4c17a1187e0770000c4c17a118fe4770000c4c17a1197e877000041c787ec770000000000004989bfd077000041c6878769000002c5f8100c24c5f810542410c5f8105c24204883c438415b415a415941585f5e5a5958c5f857c0e9{rel:LOADER_RET:0}9a9919be9a99193f6666e6be0000003f9a9999be1f856b3fc5f8104030498b8f106e000080b94d070000007535c4c279188fe0770000c5f05908c5f858c1c4c279188fe4770000c5f0594810c5f858c1c4c279188fe8770000c5f0594820c5f858c1b90000803fc5f96ec9c4e37921c130e9{rel:CAMERA_RET:0}"/>
+            <!-- Loader, liveries without a VR cockpit: search the pilot/canopy and set the eye. -->
+            <Line Type="bytes" Address="0x0071d8c2" Pattern="49 8b 04 dc 4c 89 fe 48 8b 78 18 e8 ?? ?? ?? ?? 85 c0 74 6e 48 ff c3 66 b8 ff ff 4c 39 f3 72 e0 eb 62 c5 f8 57 c0 c4 c1 78 11 87 d0 77 00 00 66 41 c7 87 f8 77 00 00 ff ff 49 c7 87 f0 77 00 00 ff ff ff ff e9 ?? ?? ?? ??" At="34" Value="e9{rel:LOADER_CODE:0}cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"/>
+            <!-- Internal camera eye from the node: add the team ship offset. -->
+            <Line Type="bytes" Address="0x00723081" Pattern="49 8b 9f d0 77 00 00 48 85 db 74 76 f6 43 61 10 74 11 48 89 df e8 ?? ?? ?? ?? c4 c1 7a 10 9f 80 75 00 00 48 8b 43 68 49 8d b7 20 76 00 00 c5 f8 10 40 30 c4 e3 79 0c 05 ?? ?? ?? ?? 08 c4 c1 78 11 87 20 76 00 00 49 8b 8f 18 6a 00 00" At="46" Value="e9{rel:CAMERA_CODE:0}90909090909090909090"/>
         </PatchList>
     </Metadata>
 </Patch>

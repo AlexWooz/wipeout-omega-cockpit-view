@@ -140,3 +140,91 @@ VR checks to their VR side one group at a time (live, in memory) narrowed it to 
 `[node+0x158]` of the HUD node `[hud+0x948]` is set from `[ship+0x6985]` (1 in the cockpit camera), which tilts
 the HUD. The block now tests the HUD's view; `al` keeps the view for the next test, of `[hud+0x950]`, a node both
 HUDs share (the external stock HUD keeps setting its bit).
+
+## Team ship cockpit view (in progress, 2026-10-28)
+
+- Team ship models have a pilot and an interior: Feisar HD `FEISAR_PilotShape`, `FEISAR_GlassShape`, `FEISAR_ScreensShape`;
+  Qirex HD `PilotShape`, `GlassShape1`, `Windscreen_strip`. No `VR_Cam`/`cockpit` nodes (the loader `0x31d7c0` only looks
+  them up for VR liveries anyway). Node tree: `tools/runtime/nodes.py` (root `[model+0x90]`, name `[node+0x88]+0x10`,
+  child `+0x20`, sibling `+0x18`, local matrix `[node+0x78]+0x80`, world `[node+0x68]`, dirty bit `0x10` of `+0x61`);
+  shape nodes hold a bounding box at `+0xdc` (min) / `+0xec` (max).
+- Bounds (ship space, +z forward, +y up): Feisar pilot (-0.48, 0.28, -1.31)-(0.48, 1.44, 1.08); Qirex pilot
+  (-0.31, 0.27, -3.71)-(0.31, 1.17, -0.86), glass (-0.38, 0.53, -3.13)-(0.39, 1.45, -0.86). VR HD: VR_Cam (0, 0.52, 0.42)
+  under `cockpit` (0, 0.21, 0); pilot (-0.35, -0.38, 0.24)-(0.26, 0.63, 1.4), helmet (-0.11, 0.56, 0.25)-(0.11, 0.84, 0.55).
+- Live proof (`tools/runtime/eye.py X Y Z`): an unused node of the model (`persp1`, `pointLight1`) moved to the eye with an
+  identity rotation, `[ship+0x77d0]` pointed at it and the view lock `[ship+0x6987] = 2`, then the camera cycled once (the
+  model visibility is set on camera change). Qirex HD at (0, 1.05, -3.0): inside the canopy, frame and screen ahead, the
+  pilot's arms on the handles in view. With lock 0 the internal camera keeps the bumper position.
+- Per-frame visibility: the model `[ship+0x7780]` bit 4 of `+0x60` is cleared every frame by `0x301be5` (camera-change
+  visibility, patched by the mod to test `VR_Cam`) and `0x31dfb1` (LOD switch); with the mod and the slot set it stays visible.
+- The launcher's `mods.json` may have the mod disabled; `tools/runtime/launch.sh` uses its own mods config with it enabled.
+
+### Camera modes (for a new cockpit mode)
+
+- The race camera is the option list `CameraP1`/`CameraP2` in `data/plugins/frontend/gui/ingame_definition.xml`
+  (also `additional_definition.xml`, `ingame_definition_demo.xml`), inside `data00.psarc`:
+  `<Entry idstring="OPT_INT|OPT_CLOSE|OPT_FAR">`, default `OPT_CLOSE`. `tools/psarc_get.py` extracts one file
+  (TOC entries keyed by the MD5 of the upper-case path).
+- `0x2ffd90` sets the camera up from the option string: `OPT_INT` -> `[cam+0x74] = 0` and the ship's internal
+  method (vtable `0x97db90` slot `0xf0` = `0x312d80`, sets `[ship+0x6986] = 2`, `+0x6983 = 1`), `OPT_CLOSE`/`OPT_FAR` ->
+  1/2 and slot `0xe8` (`0x3129f0`, external). An unknown string changes nothing (`0x300678` jne `0x300ffc`).
+  `[cam+0x74] = 3` is set by `0x2fe520` with `[ship+0x6984] = 1` (model hidden; probably the look-back camera).
+- Bumper eye: `0x3230d5`, from the camera profile `[[ship+0x6a18]+0xc8]` (Qirex HD: 65, 0, 3.0, 0, 1.3, 5, 1.3, 5;
+  probably FOV, height, forward). `InternalCamera`/`BonnetCamera`/... (`0x2f4130`) are not node names in the
+  ship `Locators.vex`.
+- The port's mods replace whole files; the option list is inside `data00.psarc`, so a new list entry needs either
+  a rebuilt archive or a code change that adds the entry in memory.
+
+### v0.8: team ships, internal camera at the pilot's eye (replaces the bumper camera)
+
+Patch group "Cockpit Camera - Team ships", built by `tools/build_cockpit_cam.py` (assembly and notes there):
+- New code in `0x301018..0x3015a9`, the VR camera-options block of `0x2ffd90` (runs only with the race VR flag, which
+  the port never sets; no branch or pointer leads into it). `0x30100a` now always jumps past it.
+- Loader `0x31d8c2` (liveries without a VR cockpit): first shape with a bounding box whose name holds "ilot" (pilot),
+  else "lass"/"reen" (canopy glass, windscreen); eye = (mid x, max.y - 0.15, min.z + 0.6) for a pilot,
+  (mid x, max.y - 0.45, min.z + 0.5) for glass, stored in `[ship+0x77e0]`; `[ship+0x77d0]` = that node; lock 2.
+  Constants (DY, DZ, GY, GZ) at `0x301199` in this build, can be tuned live.
+- Camera `0x323081`: team ships add the offset along the node's world axes.
+- The VR sound/emitter patches (`0x32f901`, `0x32fc99`, `0x304dac`) now test the VR cockpit node `[ship+0x77d8]`.
+- Tested live: Qirex HD (PilotShape: canopy, screen, pilot's arms), Feisar c1 (no pilot, FEISAR_GlassShape:
+  windscreen, dash, joystick), VR HD unchanged, 2048 AG-Systems Speed (no pilot/glass names: bumper as before).
+- Pilot/canopy shape names in the 69 ship models (`Ship.vex`): PilotShape (23), PIlotShape (8), Pilot_TShape (6),
+  Pilot_2048Shape (4), FEISAR_/GOTEKI_/SHIP_/Cockpit_PilotShape, Pilot1/2Shape, Pilot_MeshShape; 13 have none
+  (assegai/auricom/feisar `_c1`/`_n1`, mirage, tigron_x, ag_systems2048 1-4); most of those have a glass/windscreen shape.
+
+### 2048 ships (2026-10-28)
+
+- 24 2048 ship models (`ships/<team>2048/1..4`, `ships/VR_2048/1..4`). Pilot shapes: Auricom, Feisar, Qirex `PilotShape`
+  (Qirex 3 `Pilot_MeshShape`), Piranha `Pilot1Shape`/`PilotShape`/`Pilot2Shape`, VR_2048 `Pilot_2048Shape`. AG-Systems 1-4
+  have none: models 2-4 have `AG_SystemsShape`, a canopy shell with the pilot inside; model 1 has `AG_Systems_GlassShape`.
+- The loader now ranks pilot > "msSh" (`AG_SystemsShape`, eye CY/CZ = -0.30/+0.92) > glass/windscreen.
+  AG-Systems "Speed" (model 3): `AG_SystemsShape` (-0.63, 0.82, -3.12)-(0.63, 1.45, 0.06), eye (0, 1.15, -2.2), tuned live
+  (`tools/runtime/seteye.py`): canopy struts, the lit dash, both arms.
+- With the VR ships cheat on, the second unlocked AG-Systems 2048 slot of this save was a VR_2048 ship (VR_Cam, VR cockpit
+  and screens HUD): the VR 2048 ships already get the full VR cockpit through the existing patches.
+
+### 2048 HUD with team ships (open, 2026-10-29)
+
+Stock 2048 HUD (mod off): lap "1/4", target time, a plain energy bar bottom right. With the HUD group on, a team ship in
+2048 mode shows "LAP"/"TARGET" without values and a team panel with a default "AG SYSTEMS" banner over the energy bar,
+in every camera. Live tests (tools/runtime/hudtree.py): moving all of slot 1's elements (the stock-layout HUD, view 0)
+off screen removes everything, so those are slot 1's own elements; moving slot 0's off screen changes nothing; swapping
+the active HUD (0xa735b0/0xa73680) changes nothing; undoing the whole HUD group gives the stock HUD. So in 2048 the
+second HUD the setup makes (r15b = 1) is never filled in: the 2048 HUD values/team go only to the first HUD (slot 0).
+HD fills both. Next: find the 2048 HUD update and what limits it to the first HUD (or make the first HUD the screen one).
+- Confirmed live: with slot 0 (cockpit HUD, *_VR.xml layout) moved to the screen view it shows the values (1/4, 3.48.52,
+  energy bar, at its dash positions), so the 2048 HUD driver (class 0x97d248, `PLAYER HUD`/`PLAYER HUD 1`, resolved by
+  name through the registry 0x11ac4c8, not a node of either tree; one object, its +0x10 is stale after a restart) feeds
+  only the first HUD the setup makes. Options: skip the VR HUD setup in 2048 mode (team ships stock, VR 2048 ships lose
+  the dash-screen HUD), or make the driver feed the screen HUD too (unknown cost).
+
+### 2048 HUD fix (v0.9, tested live 2026-10-29)
+
+The 2048 HUD is filled by driver objects, one per HUD, created by the race managers (time trial 0x5e22a0, and
+0x5d75b0, 0x5d96d0, 0x5dd1a0, 0x5e5060, 0x5e8300): only in VR do they create the second driver (constructor arg 1,
+name "PLAYER HUD 1", partner link +0x920, stored at [game+0x30100]) and bind each driver's parent to slot[arg]. The
+race manager update 0x5cdb30 ticks only [game+0x300f8] (0x5cff83), so even in VR the second driver is never ticked.
+v0.9 (tools/build_hud2048.py, in the HUD group): the 9 VR tests take the VR side, and a cave at 0x301500 ticks both
+drivers. Checked live: Feisar 2048 Speed time trial shows LAP 4/4, TARGET, TOTAL running and the stock energy bar.
+Four sites (0x5d9a20/0x5e53ed, 0x5d7ea8/0x5ddace) are in identical twin functions: address-only lines.
+Not checked: other 2048 modes (single race, combat, zone...), VR 2048 ships' cockpit screens with the second driver.

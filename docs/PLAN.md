@@ -69,7 +69,7 @@ What is known:
   hidden in the internal camera unless `VR_Cam` is set (`0x31e07f`, `0x31e463`, `0x301bc7`, now keyed on `VR_Cam`).
 - Team ships already get the stock HUD in every camera (v0.6), so the HUD needs no work.
 
-Steps:
+Steps (step 1 and 2 done for Feisar HD and Qirex HD, see FINDINGS "Team ship cockpit view"):
 1. List a team ship's meshes and nodes live (`tools/runtime`, `ship.py` mesh listing; nodes via the model resource
    `[ship+0x7790]`): look for a pilot, seat, canopy or camera locator. Also read `Locators.vex` node names.
 2. Pick an eye point: a locator if one fits, else a fixed offset from the ship origin per ship class (HD, Fury, 2048),
@@ -90,3 +90,22 @@ Decisions (user, 2026-10-27):
   the camera modes are cycled (triangle; `[ship+0x6986]` 1 external / 2 internal, `0x3129f0`) and whether a mode can be added.
 - Broken or empty insides are handled while testing: per ship, hide the meshes that get in the way (the `[mesh+0x24]`
   show flag, as `0x3129f0` does for the VR cockpit meshes) rather than falling back to the bumper camera up front.
+
+## Team ship cockpit camera status (2026-10-28)
+- [x] Internal camera at the pilot's eye for team ships (v0.8, replaces the bumper camera; decision: user)
+- [ ] Tune the eye per ship family if needed; check more ships (Goteki, Piranha, Tigron, Auricom, Assegai, Mirage, Fury ships)
+- [ ] 2048 ships without pilot/glass shape names keep the bumper camera (e.g. AG-Systems Speed: canopy is `AG_SystemsShape`)
+- [ ] Look-back, respawn, weapons effects, split screen in the new view
+- [ ] Later, maybe: a separate camera mode instead (needs a new `CameraP1` list entry, see FINDINGS "Camera modes")
+
+## 2048 ships status (paused 2026-10-28)
+- [x] AG-Systems 2048 Speed: `AG_SystemsShape` canopy, eye (0, 1.15, -2.2) — tested live
+- [x] Feisar 2048 Speed: `PilotShape` (only nodes named "...Shape" are taken now; the group node `Pilot` gave a bad eye) — tested live
+- [ ] Qirex, Piranha, Auricom 2048 (most locked on this save), AG-Systems 1 (`AG_Systems_GlassShape`)
+- VR_2048 liveries get the full VR cockpit already
+
+## Live eye tuner (decided 2026-10-28, tool written 2026-10-29: tools/runtime/tune_eye.py)
+- `tools/runtime/tune_eye.py`: terminal tool, game started with `tools/runtime/launch.sh`; arrows / PgUp-PgDn move the
+  team-ship eye `[ship+0x77e0]` live, shows the values, a key saves them per ship model (pilot/canopy shape name + bounds).
+- Saved values become a per-ship override table in `tools/build_cockpit_cam.py` (falls back to the bounding-box rule).
+- In-game controls (button + D-pad) only if wanted later.

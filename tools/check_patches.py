@@ -16,9 +16,11 @@ def main(elf, xml):
     md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
     bad = 0
     for ln in ET.parse(xml).iter('Line'):
+        if not ln.get('Pattern'):                   # address only (see the patch's notes)
+            print(f'ADR {int(ln.get("Address"), 16) - PATCH_BASE:#x}  no signature, fixed address'); continue
         pat = ln.get('Pattern').split(); at = int(ln.get('At'))
         site = int(ln.get('Address'), 16) - PATCH_BASE
-        val = bytes.fromhex(ln.get('Value'))
+        val = bytes.fromhex(re.sub(r'\{rel:[^}]*\}', '00000000', ln.get('Value')))   # {rel} targets shown as 0
         rx = re.compile(b''.join(b'.' if p == '??' else re.escape(bytes([int(p, 16)])) for p in pat), re.S)
         hits = [m.start() for m in rx.finditer(t)]
         ok = hits == [site - at]
