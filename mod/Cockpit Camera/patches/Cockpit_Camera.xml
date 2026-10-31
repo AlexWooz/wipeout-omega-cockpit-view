@@ -17,9 +17,13 @@
         <ID>CUSA05670</ID>
     </TitleID>
     <Metadata Title="WipEout Omega Collection" Name="Cockpit Camera - Show cockpit" Note="In the internal camera, VR ships keep their model visible, so you sit in the cockpit. Ships without a cockpit are unchanged. Needs 'Cheat - VR ships outside VR' to pick a VR ship." Author="Alex" PatchVer="0.1" AppVer="01.00" AppElf="eboot.bin" isEnabled="true">
+
         <Target Name="PLAYERS" Address="0x007015ac" Pattern="eb 16 8a 05 ?? ?? ?? ?? 4c 8b 3c 24 84 c0 74 08 34 01 88 05 ?? ?? ?? ?? 48 8b 05 ?? ?? ?? ?? 80 b8 62 78 01 00 00 0f 85 ?? ?? ?? ?? 8b 0d ?? ?? ?? ??" At="27" Ref="1"/>
         <Target Name="WINDOW0" Address="0x00701280" Pattern="4c 8d 35 ?? ?? ?? ?? 48 8b 98 80 05 00 00 45 31 ff 0f b6 d1 c1 e9 08 83 f2 61 41 33 0c 96 0f b6 d1 c1 e9 08 83 f2 6d 41 33 0c 96 0f b6 d1 c1 e9 08 83 f2 65" At="28"/>
         <Target Name="WINDOW1" Address="0x00701286" Pattern="48 8b 98 80 05 00 00 45 31 ff 0f b6 d1 c1 e9 08 83 f2 61 41 33 0c 96 0f b6 d1 c1 e9 08 83 f2 6d 41 33 0c 96 0f b6 d1 c1 e9 08 83 f2 65 41 33 0c 96 0f b6 d1" At="27"/>
+        <Target Name="SETTINGS" Address="0x0070101b" Pattern="41 83 bd 4c 02 00 00 00 0f 85 ?? ?? ?? ?? 8a 05 ?? ?? ?? ?? 84 c0 0f 84 ?? ?? ?? ?? 48 8b 05 ?? ?? ?? ?? 8a 0d ?? ?? ?? ?? 4c 89 3c 24 84 c9 0f 85 ?? ?? ?? ??" At="31" Ref="1"/>
+        <Target Name="OPTION_CAVE" Address="0x00701300" Pattern="48 85 c0 75 f3 eb 07 48 83 c0 68 49 89 c7 48 8d 35 ?? ?? ?? ?? 4c 89 ff e8 ?? ?? ?? ?? 85 c0 74 33 48 8d 35 ?? ?? ?? ?? 4c 89 ff e8 ?? ?? ?? ??" At="24"/>
+        <Target Name="OPTION_RET" Address="0x007015a9" Pattern="eb 16 8a 05 ?? ?? ?? ?? 4c 8b 3c 24 84 c0 74 08 34 01 88 05 ?? ?? ?? ?? 48 8b 05 ?? ?? ?? ?? 80 b8 62 78 01 00 00 0f 85 ?? ?? ?? ?? 8b 0d ?? ?? ?? ??" At="24"/>
         <PatchList>
             <!-- Model setup (0x31e076): internal camera hides the ship unless (VR and VR_Cam).
                  Drop the VR test: je 0x31e0ed -> 2-byte nop. -->
@@ -41,6 +45,9 @@
             <Line Type="bytes" Address="0x00701280" Value="488b04d0eb064a8b04d8eb0081380b414c0f753151488b0d{rel:PLAYERS:0}4885c97423488b89f08b01004885c9741780b98369000000740e4883b9d07700000074045939c0c359f6402401c3" Pattern="4c 8d 35 ?? ?? ?? ?? 48 8b 98 80 05 00 00 45 31 ff 0f b6 d1 c1 e9 08 83 f2 61 41 33 0c 96 0f b6 d1 c1 e9 08 83 f2 6d 41 33 0c 96 0f b6 d1 c1 e9 08 83 f2 65" At="28"/>
             <Line Type="bytes" Address="0x009fe806" Value="e8{rel:WINDOW0:0}909090" Pattern="48 89 bd 68 fd ff ff 48 89 85 50 fd ff ff 88 8d 90 fd ff ff 49 8b 46 40 48 8b 04 d0 f6 40 24 01 0f 84 ?? ?? ?? ?? 48 8b 9d 10 fd ff ff 4c 69 fa e0 00 00 00" At="24"/>
             <Line Type="bytes" Address="0x009ffb04" Value="e8{rel:WINDOW1:0}909090" Pattern="49 8d 84 04 f8 02 00 00 48 89 85 50 fd ff ff 48 89 bd 68 fd ff ff 49 8b 46 40 4a 8b 04 d8 f6 40 24 01 0f 84 ?? ?? ?? ?? 48 8b 8d 10 fd ff ff 49 69 c3 e0 00 00 00" At="26"/>
+            <Line Type="bytes" Address="0x00701300" Value="51488b0d{rel:SETTINGS:0}4885c97458488b89800500004885c9744c8139139a33717406488b4950ebed8a4977498b45784885c074324883b8d877000000742880f9437509c6808769000002eb1a80f9547509c6808769000000eb0c80f9507507c680876900000159e9{rel:OPTION_RET:0}" Pattern="48 85 c0 75 f3 eb 07 48 83 c0 68 49 89 c7 48 8d 35 ?? ?? ?? ?? 4c 89 ff e8 ?? ?? ?? ?? 85 c0 74 33 48 8d 35 ?? ?? ?? ?? 4c 89 ff e8 ?? ?? ?? ??" At="24"/>
+            <Line Type="bytes" Address="0x0070100a" Value="e9{rel:OPTION_CAVE:0}909090909090909090" Pattern="49 8b 7d 78 48 8b 07 ff 90 e8 00 00 00 41 83 bd 4c 02 00 00 00 0f 85 ?? ?? ?? ?? 8a 05 ?? ?? ?? ?? 84 c0 0f 84 ?? ?? ?? ?? 48 8b 05 ?? ?? ?? ?? 8a 0d ?? ?? ?? ??" At="27"/>
+            <Line Type="bytes" Address="0x00996034" Value="e9150300009090" Pattern="41 c7 86 50 02 00 00 00 00 00 00 e8 ?? ?? ?? ?? 48 85 c0 0f 84 ?? ?? ?? ?? 80 3d ?? ?? ?? ?? 01 75 0d 80 b8 c2 00 00 00 00 0f 84 ?? ?? ?? ?? 8b 48 60" At="25"/>
         </PatchList>
     </Metadata>
     <Metadata Title="WipEout Omega Collection" Name="Cockpit Camera - Cockpit sounds" Note="Starts the VR cockpit sounds (engines, servos, consoles, structure) on ships with a cockpit." Author="Alex" PatchVer="0.2" AppVer="01.00" AppElf="eboot.bin" isEnabled="true">

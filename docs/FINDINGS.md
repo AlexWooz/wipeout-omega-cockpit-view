@@ -253,7 +253,7 @@ AG-Systems 2048 Speed, hiding `AG_Systems_SPEED_BlackBitsShape` removes the stru
   Cave 0x301480: the cockpit HUD takes them only when the screen HUD is hidden, and hides itself when the screen HUD shows,
   which also ends doubled text such as WRONG WAY on regular ships. Built by tools/build_hud2048.py.
 - View lock [ship+0x6987]: 0 track (camera fixed to the track, ship rotates), 1 pilot (camera rotates with the ship),
-  2 cockpit (gimballed). The mod now defaults to 1 (0x32f7f7, 0x3358b6); the menu option is VR only.
+  2 cockpit (gimballed). The mod defaults to 1 (0x32f7f7, 0x3358b6); since v0.15 the menu option decides.
 
 ### v0.13: Zone ships (checked in game 2026-10-30)
 - Zone race manager `0x2ca3f0` picks the team with `cmp byte [VR],0` at `0x2ca89f`: `vr_zone` with the flag, otherwise `zone` (no cockpit). Patched to always take `vr_zone`.
@@ -264,3 +264,6 @@ AG-Systems 2048 Speed, hiding `AG_Systems_SPEED_BlackBitsShape` removes the stru
 ### v0.14: window frame hidden in the VR cockpits (checked in game 2026-10-30)
 The dark struts are the ship's `Window_glassShape` part, present in all nine VR models with one name hash (`0x0f4c410b`). Hidden live on 2048 VR model 3: struts gone, dash and hull intact.
 Built by `tools/build_window.py`: the draw loop tests (`0x5fe80a`, `0x5ffb08`) call a cave at `0x301280` that also skips this part while the player ship is in the internal camera and has a cockpit. Other ships with the same model lose the part during that time too.
+
+### v0.15: VR camera option in Game Options (checked in game 2026-10-30)
+"Camera settings - VR" (setting `CameraVR`, values `OPT_INT_LOCKED_COCKPIT`/`TRACK`/`PILOT`) was greyed out without the front-end VR flag. `0x596034` now always takes the enabled side. The code applying it to `[ship+0x6987]` is in the never-run block of `0x2ffd90`, so the camera update hook at `0x30100a` jumps to a new cave at `0x301300` that does the same for ships with a cockpit. All three modes work, the choice saves, and no warning appeared. The default in a save without a choice is Cockpit. Built by `tools/build_window.py`.
