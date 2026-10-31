@@ -256,7 +256,7 @@ AG-Systems 2048 Speed, hiding `AG_Systems_SPEED_BlackBitsShape` removes the stru
   2 cockpit (gimballed). The mod defaults to 1 (0x32f7f7, 0x3358b6); since v0.15 the menu option decides.
 
 ### v0.13: Zone ships (checked in game 2026-10-30)
-- Zone race manager `0x2ca3f0` picks the team with `cmp byte [VR],0` at `0x2ca89f`: `vr_zone` with the flag, otherwise `zone` (no cockpit). Patched to always take `vr_zone`.
+- Zone race manager `0x2ca3f0` picks the team with `cmp byte [VR],0` at `0x2ca89f`: `vr_zone` with the flag, otherwise `zone` (no cockpit). Patched to always take `vr_zone` (v1.1 corrects this: see below).
 - Zone HUD update: `[hud+0xa60]`/`[hud+0xa68]` are the next-tier row (`0xa68` is the text, set by `0x280bc5`). At `0x273bc7` the row is left hidden only with the VR flag and `[0xa73680] == [0xa73690]`. Without the flag it drew flat over the cockpit view. Patched to the VR side; the third-person row still shows.
 - Element view byte `+0xf8`: the dash elements use 1. Setting another element's byte to 1 takes it off the screen.
 - Detonator shows the cockpit view with no patch of its own (checked in game). Its manager `0x2ba160` has a VR check at `0x2bb242`, left as it is.
@@ -280,3 +280,6 @@ HUD elements' local position is `+0x74`/`+0x78`. Without the VR flag, `0x2d50e3`
 
 ### Visor frame in the cockpit: tried, left out (2026-10-31)
 Tried live on a 2048 VR ship: pointing `0x27a183` at slot 0 and restoring the `jne` at `0x27a18e` makes the cockpit HUD draw the `vr_hud` visor model. It adds white lines across the top and bottom of the view and also shows a copy of the HUD readouts over the track, duplicating the dash. The user chose to leave it out; `0x27a18e` still skips the model.
+
+### v1.1: Zone follows the ship you pick (checked in game 2026-10-31)
+The v0.13 patch forced `vr_zone`, so picking the non-VR Zone ship still gave the VR one. The ship select stores the chosen team in `0x1012868` on confirm (seen live: empty before, `vr_zone` after; written at `0x5ab977`, not traced, but both ships and race restarts behave correctly in game), and the race manager then overwrites it. A cave at `0x301440`, called from `0x2ca89f`, picks `vr_zone` only when `0x1012868` already holds it.

@@ -22,6 +22,9 @@ the screen HUD, and its on-screen elements doubled text such as the lap time rea
 2048 pickup icon: without the VR flag 0x2d503d slides the pickup group from its start X to its target X, and the slide
 only stops for a target left of the start. In the cockpit layout the target is to the right, so X grew without end and
 the icon left the dash. A cave (0x301460) takes the VR side, which sets the target directly, while the cockpit HUD is active.
+
+Zone ship: the Zone race manager (0x2ca89f) overwrites the team with vr_zone only with the VR flag, otherwise with zone.
+The ship select has already stored the chosen team in 0x1012868 (0x5ab977), so a cave keeps vr_zone when that was chosen.
 """
 import os, re, sys
 import capstone, keystone
@@ -33,6 +36,7 @@ CAVE, WINDOW_HASH = 0x301280, 0x0f4c410b
 OPTION_CAVE, OPTION_HOOK, OPTION_RET, MENU_SITE = 0x301300, 0x30100a, 0x3015a9, 0x596034
 CAMERAVR_HASH = 0x71339a13
 PICKUP_CAVE, PICKUP_SITE = 0x301460, 0x2d503d
+ZONE_CAVE, ZONE_SITE = 0x301440, 0x2ca89f
 GROUP = 'Cockpit Camera - Show cockpit'
 MARK = '<!-- Window frame and VR camera option (tools/build_cockpit_extras.py) -->'
 
@@ -164,11 +168,18 @@ def build(t):
     lines.append(line(t, OPTION_CAVE, h + 'e9{rel:OPTION_RET:0}'))
     lines.append(line(t, OPTION_HOOK, 'e9{rel:OPTION_CAVE:0}' + '90' * 9))
     lines.append(line(t, MENU_SITE, 'e915030000' + '9090'))
-    assert OPTION_CAVE + len(code) + 5 <= PICKUP_CAVE and t[PICKUP_SITE:PICKUP_SITE + 2] == b'\x80\x3d'
+    assert OPTION_CAVE + len(code) + 5 <= ZONE_CAVE and t[PICKUP_SITE:PICKUP_SITE + 2] == b'\x80\x3d'
     # mov rax,[ACTIVE]; cmp rax,[SLOT0]; sete al; cmp al,0; ret (ZF clear: VR side)
     targets.append(target(t, 'PICKUP_CAVE', PICKUP_CAVE))
     lines.append(line(t, PICKUP_CAVE, '488b05{rel:HUD_ACTIVE:0}483b05{rel:HUD_SLOT0:0}0f94c03c00c3'))
     lines.append(line(t, PICKUP_SITE, 'e8{rel:PICKUP_CAVE:0}9090'))
+    assert t[ZONE_SITE:ZONE_SITE + 2] == b'\x80\x3d' and t[0x2cab79:0x2cab7c] == bytes.fromhex('488d3d')
+    # push rcx; movabs rcx,"vr_zone"; cmp [TEAM],rcx; sete cl; cmp cl,0; pop rcx; ret (ZF clear: vr_zone)
+    zone = '51' + '48b9' + b'vr_zone\0'.hex() + '48390d{rel:TEAM:0}' + '0f94c1' + '80f900' + '59' + 'c3'
+    assert ZONE_CAVE + len(re.sub(r'\{.*?\}', '00000000', zone)) // 2 <= PICKUP_CAVE
+    targets += [target(t, 'TEAM', 0x2cab7c, 0x2cab79, Ref='1'), target(t, 'ZONE_CAVE', ZONE_CAVE)]
+    lines.append(line(t, ZONE_CAVE, zone))
+    lines.append(line(t, ZONE_SITE, 'e8{rel:ZONE_CAVE:0}9090'))
     return targets, lines
 
 if __name__ == '__main__':
@@ -179,7 +190,7 @@ if __name__ == '__main__':
     m = re.search(r'(    <Metadata [^>]*Name="' + re.escape(GROUP) + r'"[^>]*>\n)(.*?)(    </Metadata>)', s, re.S)
     head, body, tail = m.groups()
     body = re.sub(r'        ' + re.escape(MARK) + r'.*?(?=        </PatchList>)', '', body, flags=re.S)
-    body = re.sub(r'\s*<Target Name="(PLAYERS|WINDOW\d|SETTINGS|OPTION_CAVE|OPTION_RET|HUD_SLOT0|HUD_SLOT1|HUD_SHOWN|HUD_OTHER|HUD_ACTIVE|PICKUP_CAVE)"[^>]*/>', '', body)
+    body = re.sub(r'\s*<Target Name="(PLAYERS|WINDOW\d|SETTINGS|OPTION_CAVE|OPTION_RET|HUD_SLOT0|HUD_SLOT1|HUD_SHOWN|HUD_OTHER|HUD_ACTIVE|PICKUP_CAVE|TEAM|ZONE_CAVE)"[^>]*/>', '', body)
     body = re.sub(r'(        <PatchList>)', '\n'.join('        ' + x for x in targets) + r'\n\1', body, count=1)
     body = body.replace('        </PatchList>', '        ' + MARK + '\n' + '\n'.join('            ' + x for x in lines) + '\n        </PatchList>')
     open(path, 'w').write(s[:m.start()] + head + body + tail + s[m.end():])

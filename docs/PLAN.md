@@ -1,6 +1,6 @@
 # Plan
 
-**Status: complete at v0.17 (2026-10-31).** This file is the work log. The team-ship camera, eye tuner and canopy hiding
+**Status: complete at v1.1 (2026-10-31). Release v1.0 is the mod at internal version 0.17.0.** This file is the work log. The team-ship camera, eye tuner and canopy hiding
 sections are history: that feature was dropped in v0.11 and its tools (`build_cockpit_cam.py`, `tune_eye.py`, `eye.py`,
 `seteye.py`) were removed from `tools/` later. They are in git up to commit `6fd994a`.
 
