@@ -17,6 +17,9 @@
         <ID>CUSA05670</ID>
     </TitleID>
     <Metadata Title="WipEout Omega Collection" Name="Cockpit Camera - Show cockpit" Note="In the internal camera, VR ships keep their model visible, so you sit in the cockpit. Ships without a cockpit are unchanged. Needs 'Cheat - VR ships outside VR' to pick a VR ship." Author="Alex" PatchVer="0.1" AppVer="01.00" AppElf="eboot.bin" isEnabled="true">
+        <Target Name="PLAYERS" Address="0x007015ac" Pattern="eb 16 8a 05 ?? ?? ?? ?? 4c 8b 3c 24 84 c0 74 08 34 01 88 05 ?? ?? ?? ?? 48 8b 05 ?? ?? ?? ?? 80 b8 62 78 01 00 00 0f 85 ?? ?? ?? ?? 8b 0d ?? ?? ?? ??" At="27" Ref="1"/>
+        <Target Name="WINDOW0" Address="0x00701280" Pattern="4c 8d 35 ?? ?? ?? ?? 48 8b 98 80 05 00 00 45 31 ff 0f b6 d1 c1 e9 08 83 f2 61 41 33 0c 96 0f b6 d1 c1 e9 08 83 f2 6d 41 33 0c 96 0f b6 d1 c1 e9 08 83 f2 65" At="28"/>
+        <Target Name="WINDOW1" Address="0x00701286" Pattern="48 8b 98 80 05 00 00 45 31 ff 0f b6 d1 c1 e9 08 83 f2 61 41 33 0c 96 0f b6 d1 c1 e9 08 83 f2 6d 41 33 0c 96 0f b6 d1 c1 e9 08 83 f2 65 41 33 0c 96 0f b6 d1" At="27"/>
         <PatchList>
             <!-- Model setup (0x31e076): internal camera hides the ship unless (VR and VR_Cam).
                  Drop the VR test: je 0x31e0ed -> 2-byte nop. -->
@@ -34,6 +37,10 @@
             <!-- Zone race manager (0x2ca89f): the ship team is vr_zone only with the race VR flag, otherwise zone (no cockpit).
                  cmp byte [VR],0 -> test esp,esp (ZF clear, as with VR on) + 5-byte nop: always vr_zone. -->
             <Line Type="bytes" Address="0x006ca89f" Value="85e40f1f440000" Pattern="48 8d 05 ?? ?? ?? ?? 48 8d 1d ?? ?? ?? ?? 8b 0d ?? ?? ?? ?? 80 3d ?? ?? ?? ?? 00 48 0f 45 d8 83 c1 f0 83 f9 07 0f 92 c0 48 85 d2 74 13 8a 82 2c 02 00 00 83 f9 07 0f 92 c1 24 04 c0 e8 02" At="20"/>
+        <!-- Window frame (tools/build_window.py) -->
+            <Line Type="bytes" Address="0x00701280" Value="488b04d0eb064a8b04d8eb0081380b414c0f753151488b0d{rel:PLAYERS:0}4885c97423488b89f08b01004885c9741780b98369000000740e4883b9d07700000074045939c0c359f6402401c3" Pattern="4c 8d 35 ?? ?? ?? ?? 48 8b 98 80 05 00 00 45 31 ff 0f b6 d1 c1 e9 08 83 f2 61 41 33 0c 96 0f b6 d1 c1 e9 08 83 f2 6d 41 33 0c 96 0f b6 d1 c1 e9 08 83 f2 65" At="28"/>
+            <Line Type="bytes" Address="0x009fe806" Value="e8{rel:WINDOW0:0}909090" Pattern="48 89 bd 68 fd ff ff 48 89 85 50 fd ff ff 88 8d 90 fd ff ff 49 8b 46 40 48 8b 04 d0 f6 40 24 01 0f 84 ?? ?? ?? ?? 48 8b 9d 10 fd ff ff 4c 69 fa e0 00 00 00" At="24"/>
+            <Line Type="bytes" Address="0x009ffb04" Value="e8{rel:WINDOW1:0}909090" Pattern="49 8d 84 04 f8 02 00 00 48 89 85 50 fd ff ff 48 89 bd 68 fd ff ff 49 8b 46 40 4a 8b 04 d8 f6 40 24 01 0f 84 ?? ?? ?? ?? 48 8b 8d 10 fd ff ff 49 69 c3 e0 00 00 00" At="26"/>
         </PatchList>
     </Metadata>
     <Metadata Title="WipEout Omega Collection" Name="Cockpit Camera - Cockpit sounds" Note="Starts the VR cockpit sounds (engines, servos, consoles, structure) on ships with a cockpit." Author="Alex" PatchVer="0.2" AppVer="01.00" AppElf="eboot.bin" isEnabled="true">

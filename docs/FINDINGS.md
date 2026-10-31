@@ -260,3 +260,7 @@ AG-Systems 2048 Speed, hiding `AG_Systems_SPEED_BlackBitsShape` removes the stru
 - Zone HUD update: `[hud+0xa60]`/`[hud+0xa68]` are the next-tier row (`0xa68` is the text, set by `0x280bc5`). At `0x273bc7` the row is left hidden only with the VR flag and `[0xa73680] == [0xa73690]`. Without the flag it drew flat over the cockpit view. Patched to the VR side; the third-person row still shows.
 - Element view byte `+0xf8`: the dash elements use 1. Setting another element's byte to 1 takes it off the screen.
 - Detonator shows the cockpit view with no patch of its own (checked in game). Its manager `0x2ba160` has a VR check at `0x2bb242`, left as it is.
+
+### v0.14: window frame hidden in the VR cockpits (checked in game 2026-10-30)
+The dark struts are the ship's `Window_glassShape` part, present in all nine VR models with one name hash (`0x0f4c410b`). Hidden live on 2048 VR model 3: struts gone, dash and hull intact.
+Built by `tools/build_window.py`: the draw loop tests (`0x5fe80a`, `0x5ffb08`) call a cave at `0x301280` that also skips this part while the player ship is in the internal camera and has a cockpit. Other ships with the same model lose the part during that time too.
