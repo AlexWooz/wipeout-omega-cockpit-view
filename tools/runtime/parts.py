@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """parts.py [OUT_DIR]: hide each part of the player ship's model in turn and screenshot the game, to find which part
-draws what (for example the canopy struts seen from the cockpit). Writes OUT_DIR/parts.png (a labelled grid) and
-prints each part's name hash (the first dword of its record) for GLASS_NAMES in tools/build_cockpit_cam.py.
+draws what (for example the window frame seen from the cockpit). Writes OUT_DIR/parts.png (a labelled grid) and
+prints each part's name hash (the first dword of its record), as used in tools/build_cockpit_extras.py.
 
 Part records live in the model file (ship*.rcsmodel): +0 name hash, +0x18 name pointer, +0x24 show bits; the scene
 draw loop skips a part when bit 1 is clear. Records are found by their name strings (the name follows the record at

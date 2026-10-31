@@ -19,7 +19,7 @@ hidden (bit 4 of +0x60), and hides itself when the screen HUD shows (regular shi
 HUDs for them, so both stayed visible and text like WRONG WAY showed twice). A cave at 0x301480 does this.
 """
 import os, re, sys
-import keystone
+import capstone, keystone
 from eboot_tool import load, PATCH_BASE
 from make_signature import signature, count
 
@@ -34,7 +34,6 @@ ks = keystone.Ks(keystone.KS_ARCH_X86, keystone.KS_MODE_64)
 
 def sig(t, site, before=24, after=24):
     """Pattern/At for site, widened until unique."""
-    import capstone
     md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
     for span in range(before, 200, 8):
         f = t.rfind(b'\x55\x48\x89\xe5', 0, site + 1)

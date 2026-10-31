@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Build the window frame lines of "Cockpit Camera - Show cockpit" and write them into the mod.
+"""Build the window frame and VR camera option lines of "Cockpit Camera - Show cockpit" and write them into the mod.
 
-  build_window.py ELF   (Needs: keystone-engine, capstone)
+  build_cockpit_extras.py ELF   (Needs: keystone-engine, capstone)
 
 The dark struts seen from the VR cockpits are the ship's Window_glassShape part, in all nine VR models (same name
 hash, first dword of the part record). The main scene draw loop (0x5f2d30) skips a part when bit 1 of +0x24 is clear
@@ -17,7 +17,7 @@ list [[0x10ea398]+0x580] (+0 hash, +0x50 next, +0x68 value) and reads the letter
 """
 import os, re, sys
 import capstone, keystone
-from eboot_tool import load, PATCH_BASE
+from eboot_tool import load
 from build_hud2048 import line, target
 
 SITES = [(0x5fe806, 'rdx', '488b04d0'), (0x5ffb04, 'r11', '4a8b04d8')]   # mov rax,[rax+IDX*8]; test byte [rax+0x24],1
@@ -25,7 +25,7 @@ CAVE, WINDOW_HASH = 0x301280, 0x0f4c410b
 OPTION_CAVE, OPTION_HOOK, OPTION_RET, MENU_SITE = 0x301300, 0x30100a, 0x3015a9, 0x596034
 CAMERAVR_HASH = 0x71339a13
 GROUP = 'Cockpit Camera - Show cockpit'
-MARK = '<!-- Window frame (tools/build_window.py) -->'
+MARK = '<!-- Window frame and VR camera option (tools/build_cockpit_extras.py) -->'
 
 ks = keystone.Ks(keystone.KS_ARCH_X86, keystone.KS_MODE_64)
 md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
