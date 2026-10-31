@@ -63,3 +63,13 @@ No game files are included in this repository. You need your own copy of the gam
 | `tools/runtime/` | Runs the game with memory access (`launch.sh`) and inspects it live (`peek.py`, `hudtree.py`, `nodes.py`, `parts.py`, ...) |
 
 The build tools need `keystone-engine` and `capstone`.
+
+## Credits
+
+This mod runs on [wipeout_pc](https://github.com/AbdelmoumenDeghbouche/wipeout_pc), the native PC
+port of WipEout Omega Collection by [AbdelmoumenDeghbouche](https://github.com/AbdelmoumenDeghbouche)
+and its contributors. See that project's README for the full credits.
+
+## License
+
+GNU GPL v2 or later ([LICENSE](LICENSE)), the same as wipeout_pc.
