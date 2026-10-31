@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """hudgroup.py SITE...: apply the "HUD on the cockpit screens" lines live, except the given sites (left original)."""
-import sys, xml.etree.ElementTree as ET
+import os, sys, xml.etree.ElementTree as ET
 from peek import wr, G
-d = open('/home/alexwooz/Games/wipeout_pc/out/eboot.elf', 'rb').read(); img = d[0x4000:0x4000 + 0x96651c]
+d = open(os.path.expanduser('~/Games/wipeout_pc/out/eboot.elf'), 'rb').read(); img = d[0x4000:0x4000 + 0x96651c]
 skip = {int(a, 16) for a in sys.argv[1:]}
-r = ET.parse('/home/alexwooz/Projects/wipeout-cockpit-cam/mod/Cockpit Camera/patches/Cockpit_Camera.xml').getroot()
+r = ET.parse(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'mod', 'Cockpit Camera', 'patches', 'Cockpit_Camera.xml')).getroot()
 for md in r.iter('Metadata'):
     if md.get('Name') != 'Cockpit Camera - HUD on the cockpit screens': continue
     for ln in md.iter('Line'):

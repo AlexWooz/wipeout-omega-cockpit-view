@@ -1,2 +1,2 @@
-{ "name": "Cockpit Camera", "author": "Alex", "version": "0.17.0",
+{ "name": "Cockpit Camera", "author": "AlexWooz", "version": "0.17.0",
   "description": "The PlayStation VR cockpit view in the flatscreen game, for the VR ships. Needs the built-in patch 'Cheat - VR ships outside VR'." }

@@ -18,7 +18,7 @@
         <ID>CUSA07671</ID>
         <ID>CUSA05670</ID>
     </TitleID>
-    <Metadata Title="WipEout Omega Collection" Name="Cockpit Camera - Show cockpit" Note="In the internal camera, VR ships keep their model visible, so you sit in the cockpit. Ships without a cockpit are unchanged. Hides the window frame in the cockpit and enables the Camera Settings - VR option. Needs 'Cheat - VR ships outside VR' to pick a VR ship." Author="Alex" PatchVer="0.1" AppVer="01.00" AppElf="eboot.bin" isEnabled="true">
+    <Metadata Title="WipEout Omega Collection" Name="Cockpit Camera - Show cockpit" Note="In the internal camera, VR ships keep their model visible, so you sit in the cockpit. Ships without a cockpit are unchanged. Hides the window frame in the cockpit and enables the Camera Settings - VR option. Needs 'Cheat - VR ships outside VR' to pick a VR ship." Author="AlexWooz" PatchVer="0.1" AppVer="01.00" AppElf="eboot.bin" isEnabled="true">
 
         <Target Name="PLAYERS" Address="0x007015ac" Pattern="eb 16 8a 05 ?? ?? ?? ?? 4c 8b 3c 24 84 c0 74 08 34 01 88 05 ?? ?? ?? ?? 48 8b 05 ?? ?? ?? ?? 80 b8 62 78 01 00 00 0f 85 ?? ?? ?? ?? 8b 0d ?? ?? ?? ??" At="27" Ref="1"/>
         <Target Name="WINDOW0" Address="0x00701280" Pattern="4c 8d 35 ?? ?? ?? ?? 48 8b 98 80 05 00 00 45 31 ff 0f b6 d1 c1 e9 08 83 f2 61 41 33 0c 96 0f b6 d1 c1 e9 08 83 f2 6d 41 33 0c 96 0f b6 d1 c1 e9 08 83 f2 65" At="28"/>
@@ -60,7 +60,7 @@
             <Line Type="bytes" Address="0x006d503d" Value="e8{rel:PICKUP_CAVE:0}9090" Pattern="48 8d 0d ?? ?? ?? ?? 48 8b 34 c1 eb 75 49 8b 84 24 70 01 00 00 83 60 60 fb 80 3d ?? ?? ?? ?? 00 0f 84 ?? ?? ?? ?? c5 fa 10 05 ?? ?? ?? ?? 41 c7 84 24 08 04 00 00 00 00 80 3f" At="25"/>
         </PatchList>
     </Metadata>
-    <Metadata Title="WipEout Omega Collection" Name="Cockpit Camera - Cockpit sounds" Note="Starts the VR cockpit sounds (engines, servos, consoles, structure) on ships with a cockpit." Author="Alex" PatchVer="0.2" AppVer="01.00" AppElf="eboot.bin" isEnabled="true">
+    <Metadata Title="WipEout Omega Collection" Name="Cockpit Camera - Cockpit sounds" Note="Starts the VR cockpit sounds (engines, servos, consoles, structure) on ships with a cockpit." Author="AlexWooz" PatchVer="0.2" AppVer="01.00" AppElf="eboot.bin" isEnabled="true">
         <PatchList>
             <!-- Cockpit sound emitters (0x32f8f0, after the model is loaded): VR only.
                  mov al,[VR]; test al,al -> cmp qword [rbx+0x77d8],0 (the VR cockpit node; the je rel32 after it is kept). -->
@@ -74,7 +74,7 @@
             <Line Type="bytes" Address="0x00704dac" Value="49398ed8770000" Pattern="88 98 aa 00 00 00 85 c9 74 33 31 c9 be 00 00 00 00 48 85 d2 74 0a 48 0f be 72 5c 48 85 f6 78 0d 48 8b 15 ?? ?? ?? ?? 48 0f a3 f2 73 05 b9 c3 f5 a8 3e 89 88 ac 00 00 00 e9 ?? ?? ?? ?? 80 3d ?? ?? ?? ?? 00 74 11 4c 89 f7 e8 ?? ?? ?? ?? 49 8d 9e 00 62 00 00 eb 6d" At="61"/>
         </PatchList>
     </Metadata>
-    <Metadata Title="WipEout Omega Collection" Name="Cockpit Camera - HUD on the cockpit screens" Note="The VR HUD on the cockpit screens in the cockpit view of VR ships. The other cameras, and team ships, keep the stock HUD." Author="Alex" PatchVer="0.9" AppVer="01.00" AppElf="eboot.bin" isEnabled="true">
+    <Metadata Title="WipEout Omega Collection" Name="Cockpit Camera - HUD on the cockpit screens" Note="The VR HUD on the cockpit screens in the cockpit view of VR ships. The other cameras, and team ships, keep the stock HUD." Author="AlexWooz" PatchVer="0.9" AppVer="01.00" AppElf="eboot.bin" isEnabled="true">
 
         <Target Name="TICK_CAVE" Address="0x00701500" Pattern="8b 05 ?? ?? ?? ?? 45 31 ff 0f b6 c8 c1 e8 08 83 f1 6f 41 33 04 8e 0f b6 c8 c1 e8 08 83 f1 6d 41 33 04 8e 0f b6 c8 c1 e8 08 83 f1 66 41 33 04 8e 0f b6 c8 c1 e8 08 83 f1 6f 41 33 04 8e 0f b6 c8 c1 e8 08 83 f1 72 41 33 04 8e 0f b6 c8 c1 e8 08 83 f1 74 41 33 04 8e 0f b6 c8 c1 e8 08 83 f1 56 41 33 04 8e 0f b6 c8 c1 e8 08 83 f1 52 41 33 04 8e 0f b6 c8 c1 e8 08 83 f1 46 41 33 04 8e 0f b6 c8 c1 e8 08" At="108"/>
         <Target Name="TICK_RET" Address="0x009cff9b" Pattern="49 8b bd f8 00 03 00 48 85 ff 74 0c 48 8b 07 c5 fa 10 44 24 20 ff 50 18 49 8b bd 08 01 03 00 48 85 ff 74 0c 48 8b 07 c5 fa 10 44 24 20 ff 50 18" At="24"/>
