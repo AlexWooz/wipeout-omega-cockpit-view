@@ -4,7 +4,7 @@ A mod for [wipeout_pc](https://github.com/AbdelmoumenDeghbouche/wipeout_pc), the
 of WipEout Omega Collection, that brings the PlayStation VR cockpit view to the normal
 flatscreen game.
 
-**Status:** complete at v0.15.
+**Status:** complete at v0.17.
 
 ## What it does
 

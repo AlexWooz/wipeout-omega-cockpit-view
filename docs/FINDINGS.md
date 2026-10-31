@@ -270,3 +270,13 @@ Built by `tools/build_window.py`: the draw loop tests (`0x5fe80a`, `0x5ffb08`) c
 
 ### Tools removed in the cleanup
 `tools/build_cockpit_cam.py` and `tools/runtime/{tune_eye,eye,seteye,hud}.py` are no longer in `tools/`; notes above that name them refer to commit `06c12b4` and earlier. `tools/build_window.py` is now `tools/build_cockpit_extras.py`.
+
+### v0.16: regular ships use the screen HUD (checked in game 2026-10-31)
+The camera switch swaps the two HUDs only for VR liveries (`0x312a24`), so regular ships kept the cockpit HUD active. `0x2fed75` shows the active HUD every frame, so hiding it live does not stick. Its on-screen elements doubled text such as the lap time readout. The camera update cave now does the swap of `0x312ac2` when the ship has no `VR_Cam`.
+Do not write `+0xf8` across all HUD nodes and leave it: it is not a view byte on every node class. The one time this was left on through a race end, the game crashed at `0x3e6c0e` with `this` = 1.
+
+### v0.17: 2048 pickup icon on the dash
+HUD elements' local position is `+0x74`/`+0x78`. Without the VR flag, `0x2d50e3` slides the pickup group from `[driver+0x3f4]` to `[driver+0x3fc]` with `max(x + step, target)`, which never stops when the target is to the right, as in the cockpit layout. The VR side (`0x2d504a`) sets the target directly. A cave at `0x301460`, called from `0x2d503d`, takes the VR side while the cockpit HUD is active; the screen HUD keeps its slide. Checked live on a 2048 VR ship with the VR side forced everywhere.
+
+### Visor frame in the cockpit: tried, left out (2026-10-31)
+Tried live on a 2048 VR ship: pointing `0x27a183` at slot 0 and restoring the `jne` at `0x27a18e` makes the cockpit HUD draw the `vr_hud` visor model. It adds white lines across the top and bottom of the view and also shows a copy of the HUD readouts over the track, duplicating the dash. The user chose to leave it out; `0x27a18e` still skips the model.
