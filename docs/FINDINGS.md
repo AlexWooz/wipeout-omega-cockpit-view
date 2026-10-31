@@ -228,3 +228,29 @@ v0.9 (tools/build_hud2048.py, in the HUD group): the 9 VR tests take the VR side
 drivers. Checked live: Feisar 2048 Speed time trial shows LAP 4/4, TARGET, TOTAL running and the stock energy bar.
 Four sites (0x5d9a20/0x5e53ed, 0x5d7ea8/0x5ddace) are in identical twin functions: address-only lines.
 Not checked: other 2048 modes (single race, combat, zone...), VR 2048 ships' cockpit screens with the second driver.
+
+### v0.10: canopy hidden in the team-ship cockpit view (2026-10-29)
+
+The black "struts" seen from the Feisar 2048 cockpit are its `GlassShape` part (the canopy frame) drawn unlit from inside.
+2048 models do not use the HD model table (0xedf3e0 entries are empty for them); their parts are records in the model
+file `ship*.rcsmodel` (record: +0 name hash, first dword depends only on the name; +0x18 name; +0x24 show bits, 7),
+shared by every ship with that model. The main scene draw loop 0x5f2d30 skips a part when bit 1 is clear
+(0x5fe80a, 0x5ffb08); clearing bit 1 of the GlassShape record live removed the struts, bits 2/4 did nothing.
+v0.10 (tools/build_cockpit_cam.py, Team ships group): both tests call a cave (0x301280) that also skips parts whose name
+hash is in GLASS_NAMES (canopy/glass/windscreen parts of all HD and 2048 ship models, collected from the files) while the
+player ship is in the internal camera and has a non-VR livery. Every ship with those models loses its canopy then.
+Tested live: Feisar 2048 Speed, clean view on the grid and mid-race.
+
+### Team-ship cockpit dropped (v0.11)
+
+The notes on v0.8-v0.10 team-ship camera and canopy hiding describe a removed group. Live finding that ended it: on the
+AG-Systems 2048 Speed, hiding `AG_Systems_SPEED_BlackBitsShape` removes the struts but also the arms and dash body.
+
+### v0.12: HUD messages, doubled text, camera mode (checked in game 2026-10-30)
+
+- Each HUD's update (0x26b030, 0x27787e) reads and clears the message flags [[hud+0x78]+0x138], so the cockpit HUD took
+  every message: centred on regular ships (its Info1 at 255,255 on view 0), nothing on VR ships in third person (hidden).
+  Cave 0x301480: the cockpit HUD takes them only when the screen HUD is hidden, and hides itself when the screen HUD shows,
+  which also ends doubled text such as WRONG WAY on regular ships. Built by tools/build_hud2048.py.
+- View lock [ship+0x6987]: 0 track (camera fixed to the track, ship rotates), 1 pilot (camera rotates with the ship),
+  2 cockpit (gimballed). The mod now defaults to 1 (0x32f7f7, 0x3358b6); the menu option is VR only.

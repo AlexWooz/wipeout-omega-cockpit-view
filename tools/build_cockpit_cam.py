@@ -20,11 +20,13 @@ stored in [ship+0x77e0] (the VR cockpit transform copy; only 0x329e60 reads it, 
 cockpit node [ship+0x77d8], which team ships do not have), [ship+0x77d0] = that node, view lock
 [ship+0x6987] = 2. With no match the ship keeps the bumper camera.
 
+Canopy hiding: see GLASS_NAMES.
+
 Camera (0x322fd0, 0x323081): with a node in [ship+0x77d0] the eye is the node's world position; for team
 ships (livery [+0x74d] 0) the stored offset is added along the node's world axes (which carry the model
 scale), then w = 1 as the original vblendps did.
 """
-import struct, sys
+import re, struct, sys
 import keystone
 from eboot_tool import load, PATCH_BASE
 from make_signature import signature, count
@@ -204,6 +206,106 @@ CAMERA = """
         vinsertps xmm0, xmm0, xmm1, 0x30
 """
 
+# Canopy hiding in the cockpit view of team ships. The main scene draw loop (0x5f2d30) takes each part record of a
+# model (holder+0x40 list; record: +0 name hash, +0x18 name, +0x24 show bits) and skips it when bit 1 of +0x24 is
+# clear (0x5fe80a, 0x5ffb08). Part records belong to the model file, not to a ship, so every ship with that model
+# loses the part while the player is in the internal camera of a team ship. The first dword of a record is the
+# hash of its name; these are the canopy/glass/windscreen parts of the HD and 2048 ship models (ship*.rcsmodel),
+# without dash screens and the VR ships' window parts.
+GLASS_NAMES = {
+    'AG_Systems_AGILITY_GlassShape': 0x0c1d7bd7,
+    'AG_Systems_GlassShape': 0xb42bcd34,
+    'AG_Systems_PROTO_GlassShape': 0x7ea89e3f,
+    'AG_Systems_SPEED_GlassShape': 0x35d29a96,
+    'Auricom_Glass1Shape': 0xdd1dcbc3,
+    'Auricom_GlassShape': 0xe5baadf3,
+    'CanopyShape': 0x620b1d71,
+    'Cockpit_GlassShape': 0x0e5d8fcd,
+    'FEISAR_GlassShape': 0x742e8c0d,
+    'FEISAR_PerspexShape': 0x83bc800e,
+    'Feisar_Glass1Shape': 0x48cac4cd,
+    'Feisar_GlassShape': 0x8dff213b,
+    'GOTEKI_GlassShape': 0x66f2482f,
+    'GOTEKI_PerspexShape': 0xb807d25b,
+    'Glass0Shape': 0xca3e4fcf,
+    'Glass1Shape': 0x01629c6a,
+    'Glass2Shape': 0x87f6eec4,
+    'Glass4Shape': 0x51af0dd9,
+    'GlassShape': 0x4ce0cbdd,
+    'GlassShape1': 0xa9f04e98,
+    'GlassShape2': 0x30f91f22,
+    'Glass_overShape': 0xdcc211b8,
+    'PerspexShape': 0xea3ca9ec,
+    'Pir_hana_GlassShape': 0xf21aa4e1,
+    'Qirex_Glass1Shape': 0x823d8845,
+    'SHIP_GlassShape': 0x78982f6d,
+    'Ship_GlassShape': 0x1eb3c7b8,
+    'WindscreenShape': 0xea930264,
+    'Windscreen_stripShape': 0x8552adff,
+    'glassShape': 0x03bdc80d,
+    'glassShape6': 0xb10854ec,
+    'pasted__Ship_Glass1Shape': 0xc86b87a1,
+    'windscreenShape': 0x62563cfa,
+}
+GLASS_SITES = [(0x5fe806, 'rdx'), (0x5ffb04, 'r11')]   # mov rax,[rax+IDX*8]; test byte [rax+0x24],1 (8 bytes)
+
+def glass(base, table):
+    stubs = ''.join(f"g{n}:\n mov rax, qword ptr [rax + {r}*8]\n jmp common\n" for n, (_, r) in enumerate(GLASS_SITES))
+    return stubs + f"""
+    common:
+        test byte ptr [rax + 0x24], 1
+        jz done
+        push rcx
+        push rdx
+        mov rcx, qword ptr [rip + 0x11223344]
+        test rcx, rcx
+        jz no
+        mov rcx, qword ptr [rcx + 0x18bf0]
+        test rcx, rcx
+        jz no
+        cmp byte ptr [rcx + 0x6983], 0
+        je no
+        mov rdx, qword ptr [rcx + 0x6e10]
+        cmp byte ptr [rdx + 0x74d], 0
+        jne no
+        mov ecx, dword ptr [rax]
+        lea rdx, [rip + {table:#x}]
+    scan:
+        cmp dword ptr [rdx], 0
+        je no
+        cmp ecx, dword ptr [rdx]
+        je hide
+        add rdx, 4
+        jmp scan
+    hide:
+        pop rdx
+        pop rcx
+        cmp eax, eax
+        ret
+    no:
+        pop rdx
+        pop rcx
+        test byte ptr [rax + 0x24], 1
+    done:
+        ret
+"""
+
+def glass_block(base):
+    """Hex (with {rel:PLAYERS:0} for the players global 0xa78e98) and the stub offsets."""
+    import capstone
+    md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
+    code = asm(glass(base, 0x7fff0000), base)
+    lea = next(i for i in md.disasm(code, base) if i.mnemonic == 'lea' and 'rip' in i.op_str)
+    tbl = base + len(code); tbl += -tbl % 4
+    code = asm(glass(base, tbl - (lea.address + lea.size)), base)
+    assert base + len(code) <= tbl
+    stubs = [i.address - base for i in md.disasm(code, base) if '*8]' in i.op_str]
+    mov = next(i for i in md.disasm(code, base) if i.op_str.startswith('rcx, qword ptr [rip'))
+    k = mov.address - base + 3                                       # the disp32 of mov rcx,[rip+disp]
+    h = code[:k].hex() + '{rel:PLAYERS:0}' + code[k + 4:].hex() + 'cc' * (tbl - base - len(code))
+    h += b''.join(struct.pack('<I', v) for v in GLASS_NAMES.values()).hex() + '00000000'
+    return h, stubs
+
 def jmp_rel(name):
     return 'e9{rel:' + name + ':0}'
 
@@ -232,6 +334,21 @@ def site(t, start, end, at, name=None, tag='Line', **extra):
     for k, v in extra.items(): attrs += f' {k}="{v}"'
     return f'<{tag} Name="{name}" {attrs}/>' if tag == 'Target' else attrs
 
+def unique_site(t, at, point=None, name=None, tag='Line', **extra):
+    """site() over instruction-aligned ranges around instruction at, widened until the signature is unique;
+    the site itself is point (default at)."""
+    import capstone
+    md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
+    f = t.rfind(b'\x55\x48\x89\xe5', 0, at + 1)
+    ins = [i.address for i in md.disasm(t[f:at + 0x80], f)]
+    k = ins.index(at)
+    for back in range(2, 40, 2):
+        start, end = ins[max(0, k - back)], ins[min(len(ins) - 1, k + 4)]
+        pat = signature(t, start, end)
+        if count(t, pat) == 1:
+            return site(t, start, end, at if point is None else point, name, tag, **extra)
+    raise SystemExit(f'no unique signature at {at:#x}')
+
 def build(t):
     CAVE = 0x301018
     hexs, ent_a, ent_b, consts = cave(CAVE)
@@ -255,8 +372,19 @@ def build(t):
     out.append('        <Line Type="bytes" ' + site(t, 0x31d8a0, 0x31d8e9, 0x31d8c2) + ' Value="e9{rel:LOADER_CODE:0}' + 'cc' * 34 + '"/>')
     out.append('        <!-- Internal camera eye from the node: add the team ship offset. -->')
     out.append('        <Line Type="bytes" ' + site(t, 0x323053, 0x3230a0, 0x323081) + ' Value="e9{rel:CAMERA_CODE:0}' + '90' * 10 + '"/>')
+    gbase = CAVE + size; gbase += -gbase % 16
+    ghex, gstubs = glass_block(gbase)
+    gsize = len(bytes.fromhex(re.sub(r'\{[^}]*\}', '00000000', ghex)))
+    assert gbase + gsize <= 0x301500, hex(gbase + gsize)                  # the 2048 HUD tick cave starts there
+    out.append('        <!-- Canopy hiding: the scene draw loop asks the code below whether to draw a part. -->')
+    out.append('        <Line Type="bytes" ' + site(t, 0x300ff6, 0x301031, gbase) + f' Value="{ghex}"/>')
+    for n, (at, _) in enumerate(GLASS_SITES):
+        out.append('        <Line Type="bytes" ' + unique_site(t, at) + ' Value="e8{rel:GLASS%d:0}909090"/>' % n)
     out.append('    </PatchList>')
     out.append('</Metadata>')
+    targets = [site(t, 0x300ff6, 0x301031, gbase + o, f'GLASS{n}', 'Target') for n, o in enumerate(gstubs)]
+    targets.append(unique_site(t, 0x3015a9, 0x3015ac, 'PLAYERS', 'Target', Ref='1'))   # mov rax,[rip -> 0xa78e98]
+    for x in reversed(targets): out.insert(3, '    ' + x)
     skip = site(t, 0x300ff6, 0x301031, 0x301014, 'SKIP', 'Target', Ref='1')
     out.insert(3, '    ' + skip)
     return '\n'.join(out), consts

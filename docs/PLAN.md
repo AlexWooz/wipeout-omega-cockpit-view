@@ -109,3 +109,17 @@ Decisions (user, 2026-10-27):
   team-ship eye `[ship+0x77e0]` live, shows the values, a key saves them per ship model (pilot/canopy shape name + bounds).
 - Saved values become a per-ship override table in `tools/build_cockpit_cam.py` (falls back to the bounding-box rule).
 - In-game controls (button + D-pad) only if wanted later.
+
+## Canopy struts per ship (paused 2026-10-29)
+- [x] Feisar 2048 Speed: `GlassShape` hidden in the cockpit view (v0.10, uncommitted)
+- [x] Third person keeps the canopy; VR 2048 unchanged (checked by the user)
+- [ ] Struts still show on AG-Systems 2048, a Qirex ship and Feisar HD: their frames are other parts. Next: in each
+      cockpit view (race running, on the grid, controller untouched) run `tools/runtime/parts.py`, read the grid,
+      and add the strut parts' name hashes to GLASS_NAMES in tools/build_cockpit_cam.py, then rebuild (--write).
+- [ ] Eyes not tuned yet for these ships
+
+## Decision 2026-10-30: no cockpit view for team ships
+v0.11 removes the "Team ships" group: team ships keep the stock bumper camera; the cockpit view is VR ships only.
+Reason: on some ships the struts can't be hidden alone (AG-Systems 2048 Speed: struts, arms and dash body are one mesh,
+`AG_Systems_SPEED_BlackBitsShape`), and the user wants all ships or none. The sections above about team ships, the eye
+tuner and canopy hiding are history; the builder and tools stay in tools/ for reference.

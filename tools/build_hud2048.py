@@ -13,6 +13,10 @@ Without them the screen HUD shows no lap, times or team. These lines take the VR
 The race manager update (0x5cdb30) ticks only the first driver ([game+0x300f8], 0x5cff83); in VR the second one is
 never ticked either. The hook there jumps to a cave (0x301500, in the never-run VR camera block of 0x2ffd90, past the
 team-ship code) that ticks [game+0x300f8] and then [game+0x30100].
+HUD messages (perfect lap, final lap...): each HUD's update (0x26b030, 0x27787e) reads the flags [[hud+0x78]+0x138] and
+clears them, so the cockpit HUD took them all, hidden or not. Now it takes them only when the screen HUD (slot 1) is
+hidden (bit 4 of +0x60), and hides itself when the screen HUD shows (regular ships: the camera switch never swaps the
+HUDs for them, so both stayed visible and text like WRONG WAY showed twice). A cave at 0x301480 does this.
 """
 import os, re, sys
 import keystone
@@ -23,6 +27,7 @@ CMP_SITES = [0x2d79f4, 0x2d8f28, 0x2d01cf, 0x5e30a6, 0x5e893c, 0x5d9a20, 0x5e53e
 MOV_SITES = [0x5d7ea8, 0x5ddace]
 HOOK, HOOK_END, CAVE = 0x5cff83, 0x5cff9b, 0x301500
 GROUP = 'Cockpit Camera - HUD on the cockpit screens'
+MSG_HOOK, MSG_CAVE = 0x27787e, 0x301480
 MARK = '<!-- 2048 HUD drivers (tools/build_hud2048.py) -->'
 
 ks = keystone.Ks(keystone.KS_ARCH_X86, keystone.KS_MODE_64)
@@ -47,8 +52,8 @@ def line(t, site, value):
         return f'<Line Type="bytes" Address="{site + PATCH_BASE:#010x}" Value="{value}"/>'
     return f'<Line Type="bytes" Address="{site + PATCH_BASE:#010x}" Value="{value}" Pattern="{pat}" At="{site - start}"/>'
 
-def target(t, name, site, **extra):
-    start, pat = sig(t, site)
+def target(t, name, site, instr=None, **extra):
+    start, pat = sig(t, instr if instr is not None else site)
     more = ''.join(f' {k}="{v}"' for k, v in extra.items())
     return f'<Target Name="{name}" Address="{site + PATCH_BASE:#010x}" Pattern="{pat}" At="{site - start}"{more}/>'
 
@@ -75,6 +80,13 @@ def build(t):
     lines = [line(t, a, '85e40f1f440000') for a in CMP_SITES] + [line(t, a, 'b2010f1f4000') for a in MOV_SITES]
     lines.append(line(t, CAVE, cave.hex() + 'e9{rel:TICK_RET:0}'))
     lines.append(line(t, HOOK, 'e9{rel:TICK_CAVE:0}' + '90' * (HOOK_END - HOOK - 5)))
+    assert t[MSG_HOOK:MSG_HOOK + 16] == bytes.fromhex('8b9838010000c7803801000000000000')
+    assert t[0x27a158:0x27a15b] == bytes.fromhex('48391d') and t[0x27a161:0x27a164] == bytes.fromhex('488b05')
+    targets += [target(t, 'SLOT0', 0x27a15b, 0x27a158, Ref='1'), target(t, 'SLOT1', 0x27a164, 0x27a161, Ref='1'), target(t, 'MSG_CAVE', MSG_CAVE)]
+    # cmp r13,[SLOT0]; jne take; mov rbx,[SLOT1]; test rbx,rbx; je take; test byte [rbx+0x60],4; je take; and byte [r13+0x60],0xfb; xor ebx,ebx; ret
+    # take: mov ebx,[rax+0x138]; mov dword [rax+0x138],0; ret
+    lines.append(line(t, MSG_CAVE, '4c3b2d{rel:SLOT0:0}751a488b1d{rel:SLOT1:0}4885db740ef64360047408' '418065 60fb'.replace(' ', '') + '31dbc3' '8b9838010000c7803801000000000000c3'))
+    lines.append(line(t, MSG_HOOK, 'e8{rel:MSG_CAVE:0}' + '90' * 11))
     return targets, lines
 
 if __name__ == '__main__':
@@ -85,7 +97,7 @@ if __name__ == '__main__':
     m = re.search(r'(    <Metadata [^>]*Name="' + re.escape(GROUP) + r'"[^>]*>\n)(.*?)(    </Metadata>)', s, re.S)
     head, body, tail = m.groups()
     body = re.sub(r'        ' + re.escape(MARK) + r'.*?(?=        </PatchList>)', '', body, flags=re.S)   # drop an older copy
-    body = re.sub(r'\s*<Target Name="TICK_(CAVE|RET)"[^>]*/>', '', body)
+    body = re.sub(r'\s*<Target Name="(TICK_CAVE|TICK_RET|SLOT0|SLOT1|MSG_CAVE)"[^>]*/>', '', body)
     body = re.sub(r'(        <PatchList>)', '\n'.join('        ' + x for x in targets) + r'\n\1', body, count=1)
     body = body.replace('        </PatchList>', '        ' + MARK + '\n' + '\n'.join('            ' + x for x in lines) + '\n        </PatchList>')
     open(path, 'w').write(s[:m.start()] + head + body + tail + s[m.end():])
