@@ -31,6 +31,9 @@
                  1 (pilot): the camera rotates with the ship. The menu option that sets it is VR only. -->
             <Line Type="bytes" Address="0x0072f7f7" Value="01" Pattern="66 c7 83 f8 77 00 00 ff ff 48 c7 83 f0 77 00 00 ff ff ff ff c6 83 87 69 00 00 02 c6 83 88 69 00 00 00 c6 83 89 69 00 00 00" At="26"/>
             <Line Type="bytes" Address="0x007358b6" Value="01" Pattern="66 c7 83 f8 77 00 00 ff ff 48 c7 83 f0 77 00 00 ff ff ff ff c7 83 87 69 00 00 02 00 00 01" At="26"/>
+            <!-- Zone race manager (0x2ca89f): the ship team is vr_zone only with the race VR flag, otherwise zone (no cockpit).
+                 cmp byte [VR],0 -> test esp,esp (ZF clear, as with VR on) + 5-byte nop: always vr_zone. -->
+            <Line Type="bytes" Address="0x006ca89f" Value="85e40f1f440000" Pattern="48 8d 05 ?? ?? ?? ?? 48 8d 1d ?? ?? ?? ?? 8b 0d ?? ?? ?? ?? 80 3d ?? ?? ?? ?? 00 48 0f 45 d8 83 c1 f0 83 f9 07 0f 92 c0 48 85 d2 74 13 8a 82 2c 02 00 00 83 f9 07 0f 92 c1 24 04 c0 e8 02" At="20"/>
         </PatchList>
     </Metadata>
     <Metadata Title="WipEout Omega Collection" Name="Cockpit Camera - Cockpit sounds" Note="Starts the VR cockpit sounds (engines, servos, consoles, structure) on ships with a cockpit." Author="Alex" PatchVer="0.2" AppVer="01.00" AppElf="eboot.bin" isEnabled="true">
@@ -95,6 +98,9 @@
                  cmp byte [rsi+0x6985],0; setne dl; mov bl,[rcx+0x158]; add dl,dl; and bl,0xfd; or bl,dl;
                  mov [rcx+0x158],bl; nop -->
             <Line Type="bytes" Address="0x0066e6b5" Value="498b8d48090000418a85880d000031d284c0750a80be85690000000f95c28a995801000000d280e3fd08d388995801000090" Pattern="49 8b b6 c0 78 01 00 48 85 f6 74 08 39 8e d0 87 00 00 74 03 48 89 c6 8a 05 ?? ?? ?? ?? 49 8b 8d 48 09 00 00 84 c0 74 04 31 d2 eb 0a 80 be 85 69 00 00 00 0f 95 c2 8a 99 58 01 00 00 00 d2 80 e3 fd" At="23"/>
+            <!-- Zone HUD (0x273bc7): the next-tier label is hidden on the cockpit HUD only with the race VR flag; without it the label draws flat over the cockpit view.
+                 cmp byte [VR],0 -> test esp,esp (ZF clear, as with VR on) + 5-byte nop. -->
+            <Line Type="bytes" Address="0x00673bc7" Value="85e40f1f440000" Pattern="49 8b 85 68 0a 00 00 c5 fa 58 05 ?? ?? ?? ?? c5 fa 11 80 24 01 00 00 c5 fa 10 44 24 10 c5 fa 11 80 28 01 00 00 80 3d ?? ?? ?? ?? 00 74 10 48 8b 0d ?? ?? ?? ?? 48 3b 0d ?? ?? ?? ?? 74 0f" At="37"/>
         <!-- 2048 HUD drivers (tools/build_hud2048.py) -->
             <Line Type="bytes" Address="0x006d79f4" Value="85e40f1f440000" Pattern="c5 fc 11 83 8c 03 00 00 c5 fc 11 83 78 03 00 00 c5 fc 11 83 58 03 00 00 0f 95 c0 80 3d ?? ?? ?? ?? 00 48 8d 04 c1 48 8d 0d ?? ?? ?? ?? 48 0f 45 c8 48 8b 01" At="27"/>
             <Line Type="bytes" Address="0x006d8f28" Value="85e40f1f440000" Pattern="c5 fc 11 83 8c 03 00 00 c5 fc 11 83 78 03 00 00 c5 fc 11 83 58 03 00 00 0f 95 c0 c5 fc 57 c0 80 3d ?? ?? ?? ?? 00 48 8d 04 c1 48 8d 0d ?? ?? ?? ?? 48 0f 45 c8 48 8b 01" At="31"/>

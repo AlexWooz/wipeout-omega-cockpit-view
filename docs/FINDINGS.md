@@ -254,3 +254,9 @@ AG-Systems 2048 Speed, hiding `AG_Systems_SPEED_BlackBitsShape` removes the stru
   which also ends doubled text such as WRONG WAY on regular ships. Built by tools/build_hud2048.py.
 - View lock [ship+0x6987]: 0 track (camera fixed to the track, ship rotates), 1 pilot (camera rotates with the ship),
   2 cockpit (gimballed). The mod now defaults to 1 (0x32f7f7, 0x3358b6); the menu option is VR only.
+
+### v0.13: Zone ships (checked in game 2026-10-30)
+- Zone race manager `0x2ca3f0` picks the team with `cmp byte [VR],0` at `0x2ca89f`: `vr_zone` with the flag, otherwise `zone` (no cockpit). Patched to always take `vr_zone`.
+- Zone HUD update: `[hud+0xa60]`/`[hud+0xa68]` are the next-tier row (`0xa68` is the text, set by `0x280bc5`). At `0x273bc7` the row is left hidden only with the VR flag and `[0xa73680] == [0xa73690]`. Without the flag it drew flat over the cockpit view. Patched to the VR side; the third-person row still shows.
+- Element view byte `+0xf8`: the dash elements use 1. Setting another element's byte to 1 takes it off the screen.
+- Detonator shows the cockpit view with no patch of its own (checked in game). Its manager `0x2ba160` has a VR check at `0x2bb242`, left as it is.
