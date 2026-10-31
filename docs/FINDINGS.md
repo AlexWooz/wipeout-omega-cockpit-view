@@ -269,7 +269,7 @@ Built by `tools/build_window.py`: the draw loop tests (`0x5fe80a`, `0x5ffb08`) c
 "Camera settings - VR" (setting `CameraVR`, values `OPT_INT_LOCKED_COCKPIT`/`TRACK`/`PILOT`) was greyed out without the front-end VR flag. `0x596034` now always takes the enabled side. The code applying it to `[ship+0x6987]` is in the never-run block of `0x2ffd90`, so the camera update hook at `0x30100a` jumps to a new cave at `0x301300` that does the same for ships with a cockpit. All three modes work, the choice saves, and no warning appeared. The default in a save without a choice is Cockpit. Built by `tools/build_window.py`.
 
 ### Tools removed in the cleanup
-`tools/build_cockpit_cam.py` and `tools/runtime/{tune_eye,eye,seteye,hud}.py` are no longer in `tools/`; notes above that name them refer to commit `06c12b4` and earlier. `tools/build_window.py` is now `tools/build_cockpit_extras.py`.
+`tools/build_cockpit_cam.py` and `tools/runtime/{tune_eye,eye,seteye,hud}.py` are no longer in `tools/`; notes above that name them refer to commit `6fd994a` and earlier. `tools/build_window.py` is now `tools/build_cockpit_extras.py`.
 
 ### v0.16: regular ships use the screen HUD (checked in game 2026-10-31)
 The camera switch swaps the two HUDs only for VR liveries (`0x312a24`), so regular ships kept the cockpit HUD active. `0x2fed75` shows the active HUD every frame, so hiding it live does not stick. Its on-screen elements doubled text such as the lap time readout. The camera update cave now does the swap of `0x312ac2` when the ship has no `VR_Cam`.

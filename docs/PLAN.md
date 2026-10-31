@@ -2,7 +2,7 @@
 
 **Status: complete at v0.17 (2026-10-31).** This file is the work log. The team-ship camera, eye tuner and canopy hiding
 sections are history: that feature was dropped in v0.11 and its tools (`build_cockpit_cam.py`, `tune_eye.py`, `eye.py`,
-`seteye.py`) were removed from `tools/` later. They are in git up to commit `06c12b4`.
+`seteye.py`) were removed from `tools/` later. They are in git up to commit `6fd994a`.
 
 ## 0. No-patch check
 Enable **Cheat - VR ships outside VR**, pick VR HD, switch to the internal camera.
